@@ -97,7 +97,7 @@
               }
               listeners[statePath[0]]=tmp;
               this.$data[x]=null;
-            }
+            } 
           }
         },
         methods:{
