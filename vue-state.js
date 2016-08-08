@@ -4,7 +4,7 @@
     install: function (Vue, opt) {
       var store = {}, actions = {},listeners=[];
       Vue.model = function (name, opts) {
-        if(!name||!opts) throw 'at least two arguments are required';
+        if(!name||!opts) throw 'two arguments are required';
         if(typeof opts.default !== 'object') throw 'please set an default object-type property to be the default data of the model';
 
         store[name] = clone(opts.default);
@@ -28,7 +28,7 @@
   
                 for(var i=0,l=handlers.length; i<l; i++) if(handlers){
                   // 第2层根据changedFields判断是否有更新，过滤一把
-                  if(handlers[i].paths[1]&& changedFields.indexOf(handlers[i].paths[1])===-1) continue;
+                  if(handlers[i].paths[1] && changedFields.indexOf(handlers[i].paths[1])===-1) continue;
                   handlers[i].comp.$set(handlers[i].data, handlers[i].pathValue(store));
   
                 }
