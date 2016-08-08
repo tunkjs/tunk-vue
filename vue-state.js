@@ -1,8 +1,11 @@
 (function () {
 
   var vueState = {
+
     install: function (Vue, opt) {
-      var store = {}, actions = {},listeners=[];
+
+      var store = {}, actions = {}, listeners=[];
+
       Vue.model = function (name, opts) {
         if(!name||!opts) throw 'two arguments are required';
         if(typeof opts.default !== 'object') throw 'please set an default object-type property to be the default data of the model';
@@ -10,12 +13,15 @@
         store[name] = clone(opts.default);
 
         for(var x in opts) if(opts.hasOwnProperty(x) && x!='default'){
-
-          actions[name+'.'+x]=(function(modelName,actionName){
+          actions[name] = actions[name]||{};
+          actions[name][x] = (function(modelName,actionName){
 
             return function(options){
               //console.time('action');
-              opts[actionName](clone(store[modelName]), dispatch, options);
+              opts[actionName].call(Object.assign({}, actions[name], Vue.model.prototype, {
+                state:store[modelName]/*clone(store[modelName])*/,
+                dispatch:dispatch,
+              }), options);
               //console.timeEnd('action');
             };
 
@@ -30,12 +36,15 @@
                   for(var i=0,l=handlers.length; i<l; i++) if(handlers){
                     // 第2层根据changedFields判断是否有更新，过滤一把
                     if(handlers[i].paths[1] && changedFields.indexOf(handlers[i].paths[1])===-1) continue;
-                    handlers[i].comp.$set(handlers[i].data, handlers[i].pathValue(store));
+                    handlers[i].comp.$set(handlers[i].dataName, pathValue(handlers[i].statePath));
 
                   }
               }else if(typeof name === 'string'){
-                if(name.indexOf('.')===-1) name=modelName+'.'+name;
-                actions[name](obj);
+                if(name.indexOf('.')===-1) name=[modelName,name];
+                else name=name.split('.');
+                if(!actions[name[0]]) throw 'the model '+name[0]+' is not exist';
+                if(!actions[name[0]][name[1]]) throw 'the action '+name[1]+' of model '+name[0]+' is not exist';
+                actions[name[0]][name[1]](obj);
               }else {
                 throw 'please check the arguments of dispatch';
               }
@@ -43,6 +52,8 @@
 
           })(name,x);
         }
+
+
       };
 
       Vue.mixin({
@@ -54,36 +65,13 @@
               listeners[statePath[0]]=listeners[statePath[0]]||[];
               listeners[statePath[0]].push({
                 comp:this,
-                data:x,
+                dataName:x,
                 paths:statePath,
-                pathValue:(function(statePath){
-                  //效率，支持路径层数为5
-                  return function(store){
-                    var state = store[statePath[0]];
-                    if(!statePath[1]) return state;
-                    else {
-                      state=state[statePath[1]];
-                      if(!statePath[2] || typeof state !=='object') return state;
-                      else {
-                        state=state[statePath[2]];
-                        if(!statePath[3] || typeof state !=='object') return state;
-                        else {
-                          state=state[statePath[3]];
-                          if(!statePath[4] || typeof state !=='object') return state;
-                          else {
-                            return state[statePath[4]];
-                            //if(!statePath[5] || typeof state !=='object') return state;
-                          }
-                        }
-                      }
-                    }
-                  };
-                })(statePath),
               });
 
               //设置组件默认数据
-              Vue.util.defineReactive(this, x, listeners[statePath[0]][listeners[statePath[0]].length-1].pathValue(store))
-              this.$set(x, listeners[statePath[0]][listeners[statePath[0]].length-1].pathValue(store));
+              Vue.util.defineReactive(this, x, pathValue(statePath));
+              //this.$set(x, listeners[statePath[0]][listeners[statePath[0]].length-1].pathValue(store));
             }
           }
 
@@ -96,21 +84,57 @@
               tmp=[];
               for(var i=0, l=listeners[statePath[0]].length; i<l; i++){
                 if(listeners[statePath[0]][i].comp!==this) tmp.push(listeners[statePath[0]][i]);
-                else console.log('beforeDestroy demaged-',this);
+                //else console.log('beforeDestroy demaged-',this);
               }
               listeners[statePath[0]]=tmp;
-              this.$data[x]=null;
             }
           }
         },
         methods:{
           $action:function(name,opts){
-            actions[name](opts);
+            if(name.indexOf('.')===-1) throw 'please check the argument of $action';
+            else name=name.split('.');
+            if(!actions[name[0]]) throw 'the model '+name[0]+' is not exist';
+            if(!actions[name[0]][name[1]]) throw 'the action '+name[1]+' of model '+name[0]+' is not exist';
+            actions[name[0]][name[1]](obj);
           }
         }
       });
 
+      Vue.model.prototype={
 
+        each:function(){},
+
+
+
+      };
+
+      function pathValue(statePath){
+        var state = store[statePath[0]];
+        if(!statePath[1]) return state;
+        else {
+          state=state[statePath[1]];
+          if(!statePath[2] || typeof state !=='object') return state;
+          else {
+            state=state[statePath[2]];
+            if(!statePath[3] || typeof state !=='object') return state;
+            else {
+              state=state[statePath[3]];
+              if(!statePath[4] || typeof state !=='object') return state;
+              else {
+                return state[statePath[4]];
+                //if(!statePath[5] || typeof state !=='object') return state;
+              }
+            }
+          }
+        }
+      }
+
+      function clone(obj){
+        if(typeof obj ==='object')
+          return JSON.parse(JSON.stringify(obj));
+        else return obj;
+      }
     }
   };
 
@@ -125,11 +149,7 @@
   else if (typeof window !== undefined) {
     return window.vueState = vueState
   }
-function clone(obj){
-  if(typeof obj ==='object')
-    return JSON.parse(JSON.stringify(obj));
-  else return obj;
-}
+
 })();
 
 
