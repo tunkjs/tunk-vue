@@ -20,21 +20,24 @@
             };
 
             function dispatch(name,obj){
-              if(arguments.length===1){
-                obj=name;
-                var state=store[modelName], handlers=listeners[modelName], changedFields = Object.keys(obj);
-                //合并到store
-                Object.assign(state,clone(obj));
-  
-                for(var i=0,l=handlers.length; i<l; i++) if(handlers){
-                  // 第2层根据changedFields判断是否有更新，过滤一把
-                  if(handlers[i].paths[1] && changedFields.indexOf(handlers[i].paths[1])===-1) continue;
-                  handlers[i].comp.$set(handlers[i].data, handlers[i].pathValue(store));
-  
-                }
-              }else if(arguments.length===2){
+              if(arguments.length===1 && typeof name === 'object'){
+
+                  obj=name;
+                  var state=store[modelName], handlers=listeners[modelName], changedFields = Object.keys(obj);
+                  //合并到store
+                  Object.assign(state,clone(obj));
+
+                  for(var i=0,l=handlers.length; i<l; i++) if(handlers){
+                    // 第2层根据changedFields判断是否有更新，过滤一把
+                    if(handlers[i].paths[1] && changedFields.indexOf(handlers[i].paths[1])===-1) continue;
+                    handlers[i].comp.$set(handlers[i].data, handlers[i].pathValue(store));
+
+                  }
+              }else if(typeof name === 'string'){
                 if(name.indexOf('.')===-1) name=modelName+'.'+name;
                 actions[name](obj);
+              }else {
+                throw 'please check the arguments of dispatch';
               }
             }
 
@@ -44,7 +47,7 @@
 
       Vue.mixin({
 
-        init() {
+        init:function() {
           if(this.$options.state){
             for(var x in this.$options.state) if(this.$options.state.hasOwnProperty(x)){
               var statePath=this.$options.state[x].split('.');
@@ -85,7 +88,7 @@
           }
 
         },
-        beforeDestroy(){
+        beforeDestroy:function(){
           if(this.$options.state){
             var statePath,tmp;
             for(var x in this.$options.state) if(this.$options.state.hasOwnProperty(x)){
@@ -97,7 +100,7 @@
               }
               listeners[statePath[0]]=tmp;
               this.$data[x]=null;
-            } 
+            }
           }
         },
         methods:{
