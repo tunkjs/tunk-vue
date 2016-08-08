@@ -18,7 +18,7 @@
 
             return function(options){
               //console.time('action');
-              opts[actionName].call(Object.assign({}, actions[name], Vue.model.prototype, {
+              opts[actionName].call(Object.assign({}, actions[modelName], Vue.model.prototype, {
                 state:store[modelName]/*clone(store[modelName])*/,
                 dispatch:dispatch,
               }), options);
