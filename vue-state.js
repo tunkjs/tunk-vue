@@ -15,20 +15,26 @@
 
             return function(options){
               //console.time('action');
-              opts[actionName](clone(store[modelName]), merge, options);
+              opts[actionName](clone(store[modelName]), dispatch, options);
               //console.timeEnd('action');
             };
 
-            function merge(obj){
-              var state=store[modelName], handlers=listeners[modelName], changedFields = Object.keys(obj);
-              //合并到store
-              Object.assign(state,clone(obj));
-
-              for(var i=0,l=handlers.length; i<l; i++) if(handlers){
-                // 第2层根据changedFields判断是否有更新，过滤一把
-                if(handlers[i].paths[1]&& changedFields.indexOf(handlers[i].paths[1])===-1) continue;
-                handlers[i].comp.$set(handlers[i].data, handlers[i].pathValue(store));
-
+            function dispatch(name,obj){
+              if(arguments.length===1){
+                obj=name;
+                var state=store[modelName], handlers=listeners[modelName], changedFields = Object.keys(obj);
+                //合并到store
+                Object.assign(state,clone(obj));
+  
+                for(var i=0,l=handlers.length; i<l; i++) if(handlers){
+                  // 第2层根据changedFields判断是否有更新，过滤一把
+                  if(handlers[i].paths[1]&& changedFields.indexOf(handlers[i].paths[1])===-1) continue;
+                  handlers[i].comp.$set(handlers[i].data, handlers[i].pathValue(store));
+  
+                }
+              }else if(arguments.length===2){
+                if(name.indexOf('.')===-1) name=modelName+'.'+name;
+                actions[name](obj);
               }
             }
 
