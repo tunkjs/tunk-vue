@@ -45,7 +45,7 @@
                 if(!actions[name[0]]) throw 'the model '+name[0]+' is not exist';
                 if(!actions[name[0]][name[1]]) throw 'the action '+name[1]+' of model '+name[0]+' is not exist';
                 actions[name[0]][name[1]](obj);
-              }else {
+              }else { 
                 throw 'please check the arguments of dispatch';
               }
             }
