@@ -59,9 +59,9 @@
       Vue.mixin({
 
         init:function() {
-          if(this.$options.state){
-            for(var x in this.$options.state) if(this.$options.state.hasOwnProperty(x)){
-              var statePath=this.$options.state[x].split('.');
+          if(this.$options.flow){
+            for(var x in this.$options.flow) if(this.$options.flow.hasOwnProperty(x)){
+              var statePath=this.$options.flow[x].split('.');
               listeners[statePath[0]]=listeners[statePath[0]]||[];
               listeners[statePath[0]].push({
                 comp:this,
@@ -77,10 +77,10 @@
 
         },
         beforeDestroy:function(){
-          if(this.$options.state){
+          if(this.$options.flow){
             var statePath,tmp;
-            for(var x in this.$options.state) if(this.$options.state.hasOwnProperty(x)){
-              statePath=this.$options.state[x].split('.');
+            for(var x in this.$options.flow) if(this.$options.flow.hasOwnProperty(x)){
+              statePath=this.$options.flow[x].split('.');
               tmp=[];
               for(var i=0, l=listeners[statePath[0]].length; i<l; i++){
                 if(listeners[statePath[0]][i].comp!==this) tmp.push(listeners[statePath[0]][i]);
@@ -151,11 +151,3 @@
   }
 
 })();
-
-
-
-
-
-
-
-
