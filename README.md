@@ -1,3 +1,3 @@
-# vue-state
-Simple and light state management plugin for  vue.js app
- 
+# vue-flow
+
+To make the state of application managed and processed as "Data Flow".
