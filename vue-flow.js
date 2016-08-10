@@ -15,13 +15,13 @@
 		install: function (Vue) {
 
 			var store = {},
-  				models = {},
-  				listeners = [],
-  				protos = {},
-  				proto,
-  				hook_beforeDispatch = [],
-  				hook_beforeStore = [],
-  				hook_beforeFlowIn = [];
+				models = {},
+				listeners = [],
+				protos = {},
+				proto,
+				hook_beforeDispatch = [],
+				hook_beforeStore = [],
+				hook_beforeFlowIn = [];
 
 			Vue.flow = {};
 
