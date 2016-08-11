@@ -11,7 +11,6 @@
 <script>
 	'use strict';
 	export default {
-
 		flow:{
 			n:'counter.num.int',
 			num:'counter.num',

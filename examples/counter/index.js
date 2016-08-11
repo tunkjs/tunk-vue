@@ -1,24 +1,27 @@
 
 import Vue from 'vue';
-import VueRouter from 'vue-router';
-import configureRouter from './router.config';
-import vueState from "../../vue-state";
+import vueState from "./vue-flow";
+import App from "./index.vue";
 
+//Vue.config.debug=true;
 
-Vue.config.debug=true;
-Vue.config.devtools=true;
-
-Vue.use(VueRouter);
 Vue.use(vueState);
-
 
 require('./text.model');
 require('./counter.model');
+//
+//var pro=new Promise(function(resolve,reject){
+//    setTimeout(function(){
+//        resolve(1);
+//    },2000);
+//});
+//
+//var func= async function(){
+//    var a= await pro;
+//    alert(a);
+//};
 
-let router = new VueRouter();
-
-configureRouter(router);
-
-let App = Vue.extend({});
-
-router.start(App, '#app');
+new Vue({
+    el: 'body',
+    components: { App }
+})
