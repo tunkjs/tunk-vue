@@ -1,25 +1,11 @@
-
 import Vue from 'vue';
-import vueState from "./vue-flow";
-import App from "./index.vue";
+import vueFlow from "vue-flow";
+import App from "./compenents/app.vue";
 
-//Vue.config.debug=true;
+Vue.use(vueFlow);
 
-Vue.use(vueState);
-
-require('./text.model');
-require('./counter.model');
-//
-//var pro=new Promise(function(resolve,reject){
-//    setTimeout(function(){
-//        resolve(1);
-//    },2000);
-//});
-//
-//var func= async function(){
-//    var a= await pro;
-//    alert(a);
-//};
+require('./models/text');
+require('./models/counter');
 
 new Vue({
     el: 'body',
