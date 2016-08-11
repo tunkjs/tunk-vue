@@ -1,12 +1,10 @@
 (function () {
 
 	/**
-
 	Vue.flow.model()
-	Vue.flow.config(hook)
+	Vue.flow.addMiddleware()
 	Vue.flow.mixin()
 	Vue.flow.bind()
-	ajax
 	 *  */
 
 
@@ -16,29 +14,29 @@
 
 			var store = {},
 				models = {},
-				listeners = [],
+				connections = [],
 				protos = {},
 				proto,
-				hook_beforeDispatch = [],
+				middlewares = [],
 				hook_beforeStore = [],
 				hook_beforeFlowIn = [];
 
 			Vue.flow = {};
 
 			Vue.flow.model = function (name, opts) {
+
 				if (!name || !opts) throw 'two arguments are required';
-				if (typeof opts.default !== 'object') throw 'please set an default object-type property to be the default data of the model';
+				if (!opts.default || opts.default.constructor !== Object) throw 'please set an default object-type property to be the default data of the model';
 
 				store[name] = clone(opts.default);
 				//定义一个model类
 				function Model() {
-					this.state = clone(store[name]);
-					this._name = name;
-					this._opts = opts;
+					this.name = name;
 				}
 
 				proto = Model.prototype = Object.assign({
 					constructor: Model,
+					getState: getState,
 				}, protos);
 
 
@@ -49,117 +47,119 @@
 						proto.dispatch = dispatch;
 
 						return function (options) {
-							//获取状态，需要frozen
-							models[modelName].state = clone(store[modelName]);
-
 							var result = opts[actionName].call(models[modelName], options);
-							if (typeof result === 'object') dispatch.call(models[modelName], result);
-
+							if (typeof result !== 'undefined') return dispatch.call(models[modelName], result);
 						};
 
-						function dispatch(name, obj) {//需要分解这个方法
-							//上一个事件结果，dispatch给下个组件，
-							var result;
-							if ((result = run_beforeDispatch_hooks(this, Array.prototype.slice.call(arguments), store[modelName])) === false) return;
-							else if (typeof result === 'object' && result.constructor === Array) {
-								name = result[0];
-								obj = result[1];
-							}
+						function dispatch(name, obj) {
 
-							if (typeof name === 'object') {
-								obj = name;
-								result = run_beforeStore_hooks(obj, store[modelName]);
-								if (typeof result === 'object') obj = result;
-								storeState(obj);
-							} else if (typeof name === 'string') {
-								if (name.indexOf('.') === -1) name = [modelName, name];
-								else name = name.split('.');
-								if (!models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
-								if (!models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
-								models[name[0]][name[1]](obj);
-							} else {
-								throw 'please check the arguments of dispatch';
-							}
+							return run_middlewares(this, Array.prototype.slice.call(arguments), {
+								modelName:modelName,
+								actionName:actionName,
+								models:models,
+								store:store,
+							}, dispatch);
 						}
-
-						//数据进出 store 通过 clone 隔离
-						function storeState(obj) {
-							var pathValue_, state = store[modelName], handlers = listeners[modelName], changedFields = Object.keys(obj), meta;
-
-							Object.assign(state, clone(obj));
-
-							for (var i = 0, l = handlers.length; i < l; i++) if (handlers) {
-								// 第2层根据changedFields判断是否有更新，过滤一把
-								if (handlers[i].statePath[1] && changedFields.indexOf(handlers[i].statePath[1]) === -1) continue;
-								// 数据流入前hook
-								pathValue_ = pathValue(handlers[i].statePath);
-
-								meta = {
-									name: handlers[i].dataName,
-									value: pathValue_,
-									action: modelName + '.' + actionName
-								};
-
-								run_beforeFlowIn_hooks(handlers[i].comp, meta);
-
-								if (handlers[i].comp.$options.beforeFlowIn)
-									handlers[i].comp.$options.beforeFlowIn.call(handlers[i].comp, meta);
-
-								handlers[i].comp.$set(handlers[i].dataName, pathValue_);
-
-							}
-						}
-
-						//控制执行流程，往下流，重新流，停止流
-						//中间件需要返回一个数组才能进行下一个中间件的执行，否则停止执行余下的中间件
-						function run_beforeDispatch_hooks(model, args, state) {
-							var result;
-							if (hook_beforeDispatch.length) {
-								for (var i = 0, l = hook_beforeDispatch.length; i < l; i++) {
-									result = hook_beforeDispatch[i].call(model, args, state, dispatch);
-									if (!result) break;
-									else if (typeof result === 'object' && result.constructor === Array) args = result;
-								}
-								return result;
-							} else return args;
-						}
-
-						function run_beforeStore_hooks(newState, state) {
-							var result;
-							for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
-								result = hook_beforeStore[i](newState, state);
-								if (typeof result === 'object') newState = result;
-							}
-							return newState;
-						}
-
-						function run_beforeFlowIn_hooks(comp, meta) {
-							for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
-								hook_beforeFlowIn[i](comp, meta);
-							}
-						}
-
 					})(name, x);
 				}
 
 				models[name] = new Model();
 
+				function getState(otherModelName) {
+					if (!otherModelName) return clone(store[this.name]);
+					else return clone(store[otherModelName]);
+				}
+
+
+				function run_middlewares(model, args, meta, dispatch) {
+					var index=0;
+
+					return next(args);
+
+					function next(args){
+						if(!args || args.constructor !== Array) throw 'the argument of next should be an array';
+						if(index<middlewares.length)
+							return middlewares[index++](dispatch, next, end, meta).apply(model, args);
+						else if(args[0] && args[0].constructor === Object) return end(args[0]);
+					}
+					function end(result){
+						if(!result) return;
+						if(result.constructor !== Object) throw 'the argument of end should be a plain object';
+						index = middlewares.length;
+						result = run_beforeStore_hooks(result, store[meta.modelName]);
+						return storeState(result, meta.modelName, meta.actionName)
+					}
+				}
+
+				//数据进出 store 通过 clone 隔离
+				function storeState(obj, modelName, actionName) {
+					var pathValue_,
+						state = store[modelName],
+						pipes = connections[modelName],
+						changedFields = Object.keys(obj),
+						meta,
+						changedState=clone(obj);
+
+					Object.assign(state, changedState);
+
+					for (var i = 0, l = pipes.length; i < l; i++) if (pipes) {
+						// 第2层根据changedFields判断是否有更新，过滤一把
+						if (pipes[i].statePath[1] && changedFields.indexOf(pipes[i].statePath[1]) === -1) continue;
+						// 数据流入前hook
+						pathValue_ = pathValue(pipes[i].statePath);
+
+						meta = {
+							name: pipes[i].dataName,
+							value: pathValue_,
+							action: modelName + '.' + actionName
+						};
+
+						run_beforeFlowIn_hooks(pipes[i].comp, meta);
+
+						if (pipes[i].comp.$options.beforeFlowIn)
+							pipes[i].comp.$options.beforeFlowIn.call(pipes[i].comp, meta);
+
+						pipes[i].comp.$set(pipes[i].dataName, pathValue_);
+
+					}
+
+					return changedState;
+
+				}
+
+				function run_beforeStore_hooks(newState, state) {
+					var result;
+					for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
+						result = hook_beforeStore[i](newState, state);
+						if (typeof result === 'object') newState = result;
+					}
+					return newState;
+				}
+
+				function run_beforeFlowIn_hooks(comp, meta) {
+					for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
+						hook_beforeFlowIn[i](comp, meta);
+					}
+				}
+
 			};
 
-
 			Vue.flow.bind = function (bindName, func) {
-				if (typeof middleware === 'function')
+				if (typeof func === 'function')
 					switch (hookName) {
-						case 'beforeDispatch':
-							hook_beforeDispatch.push(func);
-							break;
 						case 'beforeStore':
 							hook_beforeStore.push(func);
 							break;
 						case 'beforeFlowIn':
 							hook_beforeFlowIn.push(func);
 					}
-				else throw 'a function as the second argument is needed';
+				else throw 'a callback as the second argument is needed';
+			};
+
+			Vue.flow.addMiddleware = function (middleware) {
+				if(typeof middleware === 'object' && middleware.constructor === Array)
+					middlewares = middleware.concat(middleware);
+				else if(typeof middleware === 'function') middlewares.push(middleware);
 			};
 
 			Vue.flow.mixin = function (obj) {
@@ -172,8 +172,8 @@
 					if (this.$options.flow) {
 						for (var x in this.$options.flow) if (this.$options.flow.hasOwnProperty(x)) {
 							var statePath = this.$options.flow[x].split('.');
-							listeners[statePath[0]] = listeners[statePath[0]] || [];
-							listeners[statePath[0]].push({
+							connections[statePath[0]] = connections[statePath[0]] || [];
+							connections[statePath[0]].push({
 								comp: this,
 								dataName: x,
 								statePath: statePath,
@@ -191,11 +191,10 @@
 						for (var x in this.$options.flow) if (this.$options.flow.hasOwnProperty(x)) {
 							statePath = this.$options.flow[x].split('.');
 							tmp = [];
-							for (var i = 0, l = listeners[statePath[0]].length; i < l; i++) {
-								if (listeners[statePath[0]][i].comp !== this) tmp.push(listeners[statePath[0]][i]);
-								//else console.log('beforeDestroy demaged-',this);
+							for (var i = 0, l = connections[statePath[0]].length; i < l; i++) {
+								if (connections[statePath[0]][i].comp !== this) tmp.push(connections[statePath[0]][i]);
 							}
-							listeners[statePath[0]] = tmp;
+							connections[statePath[0]] = tmp;
 						}
 					}
 				},
@@ -211,17 +210,31 @@
 			});
 
 
+			//extentions
+
+			Vue.flow.addMiddleware(function(dispatch, next, end, meta){
+				return function(name, options){
+					if(typeof name !== 'string') {
+						return next(Array.prototype.slice.call(arguments));
+					}
+					if (name.indexOf('.') === -1) name = [meta.modelName, name];
+					else name = name.split('.');
+					if (!meta.models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
+					if (!meta.models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
+					return meta.models[name[0]][name[1]](options);
+				};
+			});
 
 
 			Vue.flow.mixin({
 
 				each: function (obj, cb) {
 					if (typeof obj === 'object') {
-						if (typeof obj.length !== 'undefined')
+						if (typeof obj.length !== 'undefined') {
 							for (var i = 0, l = obj.length; i < l; i++)
 								if (cb(obj[i], i) === false) break;
-								else for (var x in obj)
-									if (obj.hasOwnProperty(x) && cb(obj[x], x) === false) break;
+						} else for (var x in obj)
+							if (obj.hasOwnProperty(x) && cb(obj[x], x) === false) break;
 					} else console.error('argument is wrong');
 				},
 
