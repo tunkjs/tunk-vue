@@ -4,9 +4,7 @@
 export default function (router) {
     router.map({
         "": {
-            "component": require('./pages/wap_designer.vue')
+            "component": require('./index.vue')
         },
-
     });
-
 }

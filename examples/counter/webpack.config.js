@@ -9,10 +9,8 @@ let ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = {
     devtool : 'cheap-module-eval-source-map',
-    // 文件入口 entry
     entry: {
         main:'./index.js',
-        vendor:['vue'],
     },
     output: {
         path: __dirname + '/build/',
@@ -26,7 +24,6 @@ module.exports = {
     },
     // 插件配置
     plugins: [
-        new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.js'),
         new ExtractTextPlugin('style.css')
     ],
     module: {
@@ -78,4 +75,3 @@ module.exports = {
         }
     },
 };
-
