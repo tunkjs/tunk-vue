@@ -17,6 +17,7 @@ Vue.flow.model('options',{
     },
 
 	test_action_multi_options:function(a,b){
+	    console.log(arguments);
 		this.dispatch('options.test_dispatch_multi_options',a,b);
 		return {t:a+'+'+b};
     },
@@ -43,7 +44,7 @@ export default {
 	data(){
 		return {
 			units:{
-				'pipes-----------':false,
+				'pipes':false,
 				'action_inject':false,
 				'this_action':false,
 				'beforeFlowIn':false,
@@ -95,7 +96,7 @@ export default {
 
 		setTimeout(()=>{
 			this.$action('options.test_action_multi_options','1','2');
-		},100);
+		},400);
 	}
     
 }

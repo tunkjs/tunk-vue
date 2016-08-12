@@ -1,10 +1,10 @@
 (function () {
 
 	/**
-	Vue.flow.model()
-	Vue.flow.addMiddleware()
-	Vue.flow.mixin()
-	Vue.flow.bind()
+	 Vue.flow.model()
+	 Vue.flow.addMiddleware()
+	 Vue.flow.mixin()
+	 Vue.flow.bind()
 	 *  */
 
 
@@ -51,7 +51,7 @@
 							if (typeof result !== 'undefined') return dispatch.call(models[modelName], result);
 						};
 
-						function dispatch(name, obj) {
+						function dispatch() {
 
 							return run_middlewares(this, Array.prototype.slice.call(arguments), {
 								modelName:modelName,
@@ -80,7 +80,7 @@
 						if(!args || args.constructor !== Array) throw 'the argument of next should be an array';
 						if(index<middlewares.length)
 							return middlewares[index++](dispatch, next, end, meta).apply(model, args);
-						else if(args[0] && args[0].constructor === Object) return end(args[0]);
+						else return end(args[0]);
 					}
 					function end(result){
 						if(!result) return;
@@ -102,7 +102,7 @@
 
 					Object.assign(state, changedState);
 
-					for (var i = 0, l = pipes.length; i < l; i++) if (pipes) {
+					for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
 						// 第2层根据changedFields判断是否有更新，过滤一把
 						if (pipes[i].statePath[1] && changedFields.indexOf(pipes[i].statePath[1]) === -1) continue;
 						// 数据流入前hook
@@ -138,7 +138,7 @@
 
 				function run_beforeFlowIn_hooks(comp, meta) {
 					for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
-						hook_beforeFlowIn[i](comp, meta);
+						hook_beforeFlowIn[i].call(comp, meta);
 					}
 				}
 
@@ -146,7 +146,7 @@
 
 			Vue.flow.bind = function (bindName, func) {
 				if (typeof func === 'function')
-					switch (hookName) {
+					switch (bindName) {
 						case 'beforeStore':
 							hook_beforeStore.push(func);
 							break;
@@ -169,9 +169,9 @@
 			Vue.mixin({
 
 				init: function () {
-					if (this.$options.flow) {
-						for (var x in this.$options.flow) if (this.$options.flow.hasOwnProperty(x)) {
-							var statePath = this.$options.flow[x].split('.');
+					if (this.$options.pipes) {
+						for (var x in this.$options.pipes) if (this.$options.pipes.hasOwnProperty(x)) {
+							var statePath = this.$options.pipes[x].split('.');
 							connections[statePath[0]] = connections[statePath[0]] || [];
 							connections[statePath[0]].push({
 								comp: this,
@@ -200,10 +200,10 @@
 
 				},
 				beforeDestroy: function () {
-					if (this.$options.flow) {
+					if (this.$options.pipes) {
 						var statePath, tmp;
-						for (var x in this.$options.flow) if (this.$options.flow.hasOwnProperty(x)) {
-							statePath = this.$options.flow[x].split('.');
+						for (var x in this.$options.pipes) if (this.$options.pipes.hasOwnProperty(x)) {
+							statePath = this.$options.pipes[x].split('.');
 							tmp = [];
 							for (var i = 0, l = connections[statePath[0]].length; i < l; i++) {
 								if (connections[statePath[0]][i].comp !== this) tmp.push(connections[statePath[0]][i]);

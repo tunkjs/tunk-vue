@@ -14,7 +14,7 @@
 
 			var store = {},
 				models = {},
-				connections = [],
+				connections = {},
 				protos = {},
 				proto,
 				middlewares = [],
@@ -51,7 +51,7 @@
 							if (typeof result !== 'undefined') return dispatch.call(models[modelName], result);
 						};
 
-						function dispatch(name, obj) {
+						function dispatch() {
 
 							return run_middlewares(this, Array.prototype.slice.call(arguments), {
 								modelName:modelName,
@@ -71,7 +71,7 @@
 				}
 
 
-				function run_middlewares(model, args, meta, dispatch) {
+				function run_middlewares(model, args, context, dispatch) {
 					var index=0;
 
 					return next(args);
@@ -79,15 +79,15 @@
 					function next(args){
 						if(!args || args.constructor !== Array) throw 'the argument of next should be an array';
 						if(index<middlewares.length)
-							return middlewares[index++](dispatch, next, end, meta).apply(model, args);
-						else if(args[0] && args[0].constructor === Object) return end(args[0]);
+							return middlewares[index++](dispatch, next, end, context).apply(model, args);
+						else return end(args[0]);
 					}
 					function end(result){
 						if(!result) return;
 						if(result.constructor !== Object) throw 'the argument of end should be a plain object';
 						index = middlewares.length;
-						result = run_beforeStore_hooks(result, store[meta.modelName]);
-						return storeState(result, meta.modelName, meta.actionName)
+						result = run_beforeStore_hooks(result, store[context.modelName]);
+						return storeState(result, context.modelName, context.actionName)
 					}
 				}
 
@@ -102,7 +102,7 @@
 
 					Object.assign(state, changedState);
 
-					for (var i = 0, l = pipes.length; i < l; i++) if (pipes) {
+					if( pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
 						// 第2层根据changedFields判断是否有更新，过滤一把
 						if (pipes[i].statePath[1] && changedFields.indexOf(pipes[i].statePath[1]) === -1) continue;
 						// 数据流入前hook
@@ -158,7 +158,7 @@
 
 			Vue.flow.addMiddleware = function (middleware) {
 				if(typeof middleware === 'object' && middleware.constructor === Array)
-					middlewares = middleware.concat(middleware);
+					middlewares = middlewares.concat(middleware);
 				else if(typeof middleware === 'function') middlewares.push(middleware);
 			};
 
@@ -192,7 +192,9 @@
 							if (!models[action[0]][action[1]]) throw 'the action ' + action[1] + ' of model ' + action[0] + ' is not exist';
 							this[x]=(function(modelName,actionName){
 								return function(){
-									models[modelName][actionName].call(models[modelName], Array.prototype.slice.call(arguments));
+									if(arguments[0] && arguments[0].cancelBubble!==undefined && arguments[0].srcElement)
+										models[modelName][actionName].call(models[modelName]);
+									else models[modelName][actionName].call(models[modelName], Array.prototype.slice.call(arguments));
 								};
 							})(action[0], action[1]);
 						}
@@ -226,16 +228,16 @@
 
 			//extentions
 
-			Vue.flow.addMiddleware(function(dispatch, next, end, meta){
+			Vue.flow.addMiddleware(function(dispatch, next, end, context){
 				return function(name, options){
 					if(typeof name !== 'string') {
 						return next(Array.prototype.slice.call(arguments));
 					}
-					if (name.indexOf('.') === -1) name = [meta.modelName, name];
+					if (name.indexOf('.') === -1) name = [context.modelName, name];
 					else name = name.split('.');
-					if (!meta.models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
-					if (!meta.models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
-					return meta.models[name[0]][name[1]](options);
+					if (!context.models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
+					if (!context.models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
+					return context.models[name[0]][name[1]](options);
 				};
 			});
 
