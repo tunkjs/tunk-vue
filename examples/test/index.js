@@ -1,6 +1,6 @@
 import Vue from 'vue';
-import vueFlow from "vue-flow";
-import App from "./components/Counter.vue";
+import vueFlow from "./vue-flow";
+import App from "./App.vue";
 
 Vue.use(vueFlow);
 
