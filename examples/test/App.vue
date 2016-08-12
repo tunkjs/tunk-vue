@@ -5,20 +5,14 @@
 </template>
 
 <style scoped>
-	section{
-		padding:20px;
-		margin:5px;
-		background-color:#eee;
-	}
+	@import url('./libs/css/bootstrap.css');
+	@import url('./libs/css/font-awesome.css');
+
 </style>
 <script>
 
+var compons = require('./tests/main');
 
-
-
-
-var compons = require('./components/main');
-console.log(compons);
 export default {
 
 	data(){

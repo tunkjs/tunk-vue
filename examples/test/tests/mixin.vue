@@ -1,0 +1,48 @@
+<template>
+  <div>
+    Test : Mixin {{ count }}
+    <button @click="click">+</button>
+  </div>
+</template>
+
+<script>
+
+import Vue from 'vue';
+
+//beforeStore beforeFlowIn
+Vue.flow.bind('beforeStore',function(newState,oldState){
+	console.log('test:beforeStore',JSON.parse(JSON.stringify({newState,oldState})));
+});
+
+Vue.flow.bind('beforeStore',function(newState,oldState){
+	console.log('test2:beforeStore');
+});
+
+Vue.flow.bind('beforeFlowIn',function(meta){
+	console.log('test:beforeFlowIn',{meta,comp:this});
+});
+Vue.flow.bind('beforeFlowIn',function(meta){
+	console.log('test2:beforeFlowIn');
+});
+
+Vue.flow.model('bind',{
+    default:{
+        count: 0,
+    },
+    click:function(opt){
+		return {count:this.getState().count+1};
+    },
+});
+
+export default {
+    pipes: {
+      count: 'bind.count'
+    },
+	action:{
+		click:'bind.click',
+	},
+	ready(){
+		
+	}
+}
+</script>
