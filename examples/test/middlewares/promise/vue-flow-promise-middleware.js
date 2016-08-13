@@ -3,7 +3,7 @@
     var promise_middleware = function(dispatch, next, end, context){
         return function(promise){
             if(typeof promise !== 'object' || !promise.then) {
-                return next(Array.prototype.slice.call(arguments));
+                return next(arguments);
             }
             promise.then(function(result){
                 next([result]);

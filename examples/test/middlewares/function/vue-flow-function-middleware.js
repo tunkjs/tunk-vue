@@ -3,7 +3,7 @@
     var function_middleware = function(dispatch, next, end, context){
         return function(func){
             if(typeof func !== 'function') {
-                return next(Array.prototype.slice.call(arguments));
+                return next(arguments);
             }
 
             var result = func();

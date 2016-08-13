@@ -10,11 +10,11 @@ import Vue from 'vue';
 
 //beforeStore beforeFlowIn
 Vue.flow.bind('beforeStore',function(newState,oldState){
-	console.log('test:beforeStore',JSON.parse(JSON.stringify({newState,oldState})));
+	//console.log('test:beforeStore',JSON.parse(JSON.stringify({newState,oldState})));
 });
 
 Vue.flow.bind('beforeStore',function(newState,oldState){
-	console.log('test2:beforeStore');
+	//console.log('test2:beforeStore');
 });
 
 Vue.flow.bind('beforeFlowIn',function(meta){

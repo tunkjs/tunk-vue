@@ -3,6 +3,7 @@
     Test : Mixin {{ count }}
     <button @click="click">+</button>
   </div>
+
 </template>
 
 <script>

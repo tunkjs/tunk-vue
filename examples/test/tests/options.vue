@@ -1,5 +1,7 @@
 <template>
-  <test title="components 参数 操作" :units='units'></test>
+  <test title="components 参数 操作" :units='units'>
+	  <button @click="inject_action_multi_options(2,2)" class="btn btn-default">inject_action_multi_options</button>
+  </test>
 </template>
 
 <script>
@@ -17,7 +19,6 @@ Vue.flow.model('options',{
     },
 
 	test_action_multi_options:function(a,b){
-	    console.log(arguments);
 		this.dispatch('options.test_dispatch_multi_options',a,b);
 		return {t:a+'+'+b};
     },
@@ -52,6 +53,7 @@ export default {
 				return_despatch:false,
 				dispatch_multi_options:false,
 				action_multi_options:false,
+				inject_action_multi_options:false,
 			}
 		};
 	},
@@ -60,6 +62,7 @@ export default {
 	},
 
 	beforeFlowIn(meta){
+		console.log(meta.value);
 		this.$set('units.beforeFlowIn',true);
 		switch(meta.value){
 			case'action':
@@ -74,6 +77,9 @@ export default {
 			case'1-2':
 			this.$set('units.dispatch_multi_options',true);
 			break;
+			case'2+2':
+				this.$set('units.inject_action_multi_options',true);
+				break;
 		}
 		if(meta.action=='options.test_dispatched'){
 			this.$set('units.dispatch',true);
@@ -82,6 +88,7 @@ export default {
 
 	action:{
 		test_dispatch:'options.test_dispatch',
+		inject_action_multi_options:'options.test_action_multi_options'
 	},
 
 	ready(){
