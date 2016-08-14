@@ -19,8 +19,5 @@
     else if (typeof define === 'function' && define.amd) {
         define(function () { return function_middleware })
     }
-    else if (typeof window !== undefined) {
-        return window.function_middleware = function_middleware
-    }
 
 })();

@@ -44,8 +44,5 @@
     else if (typeof define === 'function' && define.amd) {
         define(function () { return action_middleware })
     }
-    else if (typeof window !== undefined) {
-        return window.action_middleware = action_middleware
-    }
 
 })();
