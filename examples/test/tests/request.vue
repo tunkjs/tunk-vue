@@ -1,5 +1,7 @@
 <template>
   <test title="request" :units='units'>
+	  <b>pending:{{p}} ---</b>
+	  <p v-for="item in q">{{item.id}} --- {{item.status}} --- <span class="label label-info" v-for="(key,tip) in item">{{key+':'+tip}} -- </span></p>
   </test>
 </template>
 
@@ -43,12 +45,27 @@ Vue.flow.model('request',{
 		});
 		json.xhr.abort();
 	},
+	test_$request_model: function(){
+		var self = this;
+		var json = this.request({
+			url:'http://search.lefeng.com/ajax/getHotKeys',
+			extra:{
+				timeout:3,
+				success:'成功',
+				error:'失败',
+				pending:'加载中...',
+			},
+			success:function(v){},
+		});
+	},
 
 });
 
 export default {
 	flow:{
-		t:'request.t'
+		t:'request.t',
+		p:'$request.pending',
+		q:'$request.queue'
 	},
 	actions:{
 		jsonp:'request.test_jsonp',
@@ -57,6 +74,8 @@ export default {
 		json:'request.test_json',
 		json_promise:'request.test_json_promise',
 		json_abort:'request.test_json_abort',
+		request_model:'request.test_$request_model',
+
 	},
 	data(){
 		return {
@@ -67,6 +86,7 @@ export default {
 				json:false,
 				json_promise:false,
 				json_abort:false,
+				request_model:false,
 			}
 		};
 	},
@@ -88,7 +108,11 @@ export default {
 		this.json_promise();
 		setTimeout(function(){
 			self.json_abort();
-		},10)
+		},10);
+		setTimeout(function(){
+			self.request_model();
+		},2000);
+
 		
 	}
     

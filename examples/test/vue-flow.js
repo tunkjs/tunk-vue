@@ -64,86 +64,13 @@
 
 				models[name] = new Model();
 
-				function getState(otherModelName) {
-					if (!otherModelName) return clone(store[this.name]);
-					else return clone(store[otherModelName]);
-				}
+			};
 
 
-				function run_middlewares(model, args, context, dispatch) {
-					var index=0;
-
-					return next(args);
-
-					function next(args){
-						if(typeof args !== 'object'|| isNaN(args.length)) throw 'please make sure the param of next is type of array or argument';
-						if(index<middlewares.length)
-							return apply(middlewares[index++](dispatch, next, end, context), args, model);
-						else return end(args[0]);
-					}
-
-					function end(result){
-						if(!result) return;
-						if(result.constructor !== Object) {
-							console.log(arguments);
-							throw 'the argument of end should be a plain object';
-						}
-						index = middlewares.length;
-						result = run_beforeStore_hooks(result, store[context.modelName]);
-						return storeState(result, context.modelName, context.actionName)
-					}
-				}
-
-				//数据进出 store 通过 clone 隔离
-				function storeState(obj, modelName, actionName) {
-					var pathValue_,
-						state = store[modelName],
-						pipes = connections[modelName],
-						changedFields = Object.keys(obj),
-						meta,
-						changedState=clone(obj);
-
-					Object.assign(state, changedState);
-
-					if( pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
-						// 第2层根据changedFields判断是否有更新，过滤一把
-						if (pipes[i].statePath[1] && changedFields.indexOf(pipes[i].statePath[1]) === -1) continue;
-						// 数据流入前hook
-						pathValue_ = pathValue(pipes[i].statePath);
-
-						meta = {
-							name: pipes[i].dataName,
-							value: pathValue_,
-							action: modelName + '.' + actionName
-						};
-
-						run_beforeFlowIn_hooks(pipes[i].comp, meta);
-
-						if (pipes[i].comp.$options.beforeFlowIn)
-							pipes[i].comp.$options.beforeFlowIn.call(pipes[i].comp, meta);
-
-						pipes[i].comp.$set(pipes[i].dataName, pathValue_);
-
-					}
-
-					return changedState;
-
-				}
-
-				function run_beforeStore_hooks(newState, state) {
-					var result;
-					for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
-						result = hook_beforeStore[i](newState, state);
-						if (typeof result === 'object') newState = result;
-					}
-					return newState;
-				}
-
-				function run_beforeFlowIn_hooks(comp, meta) {
-					for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
-						hook_beforeFlowIn[i].call(comp, meta);
-					}
-				}
+			Vue.flow.dispatch=function(modelName, options) {
+				if(modelName && modelName.constructor===String)
+					storeState(options, modelName, 'Vue.flow');
+				else throw 'the first argument should be a model name the second shuould be a plain object';
 			};
 
 			Vue.flow.bind = function (bindName, func) {
@@ -264,20 +191,101 @@
 
 			});
 
+			function getState(otherModelName) {
+				if (!otherModelName) return clone(store[this.name]);
+				else return clone(store[otherModelName]);
+			}
+
+
+			function run_middlewares(model, args, context, dispatch) {
+				var index=0;
+
+				return next(args);
+
+				function next(args){
+					if(typeof args !== 'object'|| isNaN(args.length)) throw 'please make sure the param of next is type of array or argument';
+					if(index<middlewares.length)
+						return apply(middlewares[index++](dispatch, next, end, context), args, model);
+					else return end(args[0]);
+				}
+
+				function end(result){
+					if(!result) return;
+					if(result.constructor !== Object) {
+						console.log(arguments);
+						throw 'the argument of end should be a plain object';
+					}
+					index = middlewares.length;
+					result = run_beforeStore_hooks(result, store[context.modelName]);
+					return storeState(result, context.modelName, context.actionName)
+				}
+			}
+
+			//数据进出 store 通过 clone 隔离
+			function storeState(obj, modelName, actionName) {
+				var pathValue_,
+					state = store[modelName],
+					pipes = connections[modelName],
+					changedFields = Object.keys(obj),
+					meta,
+					changedState=clone(obj);
+
+				Object.assign(state, changedState);
+
+				if( pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
+					// 第2层根据changedFields判断是否有更新，过滤一把
+					if (pipes[i].statePath[1] && changedFields.indexOf(pipes[i].statePath[1]) === -1) continue;
+					// 数据流入前hook
+					pathValue_ = pathValue(pipes[i].statePath);
+
+					meta = {
+						name: pipes[i].dataName,
+						value: pathValue_,
+						action: modelName + '.' + actionName
+					};
+
+					run_beforeFlowIn_hooks(pipes[i].comp, meta);
+
+					if (pipes[i].comp.$options.beforeFlowIn)
+						pipes[i].comp.$options.beforeFlowIn.call(pipes[i].comp, meta);
+
+					pipes[i].comp.$set(pipes[i].dataName, pathValue_);
+
+				}
+
+				return changedState;
+
+			}
+
+			function run_beforeStore_hooks(newState, state) {
+				var result;
+				for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
+					result = hook_beforeStore[i](newState, state);
+					if (typeof result === 'object') newState = result;
+				}
+				return newState;
+			}
+
+			function run_beforeFlowIn_hooks(comp, meta) {
+				for (var i = 0, l = hook_beforeStore.length; i < l; i++) {
+					hook_beforeFlowIn[i].call(comp, meta);
+				}
+			}
+
 			function pathValue(statePath) {
 				var state = store[statePath[0]];
 				if (!statePath[1]) return clone(state);
 				else {
-					state = state[statePath[1]];
+					state = isNaN(statePath[1])?state[statePath[1]]:(state[statePath[1]]||state[parseInt(statePath[1])]);
 					if (!statePath[2] || typeof state !== 'object') return clone(state);
 					else {
-						state = state[statePath[2]];
+						state = isNaN(statePath[2])?state[statePath[2]]:(state[statePath[2]]||state[parseInt(statePath[2])]);
 						if (!statePath[3] || typeof state !== 'object') return clone(state);
 						else {
-							state = state[statePath[3]];
+							state = isNaN(statePath[3])?state[statePath[3]]:(state[statePath[3]]||state[parseInt(statePath[3])]);
 							if (!statePath[4] || typeof state !== 'object') return clone(state);
 							else {
-								return clone(state[statePath[4]]);
+								return clone(isNaN(statePath[4])?state[statePath[4]]:(state[statePath[4]]||state[parseInt(statePath[4])]));
 							}
 						}
 					}

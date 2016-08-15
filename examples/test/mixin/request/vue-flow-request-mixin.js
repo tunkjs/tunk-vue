@@ -1,5 +1,7 @@
 ;(function(){
 
+    var Vue = require('vue');
+
     var jsonpID = +new Date(),
         document = window.document,
         key,
@@ -10,21 +12,48 @@
         jsonType = 'application/json',
         htmlType = 'text/html',
         blankRE = /^\s*$/,
-        originAnchor = document.createElement('a');
+        originAnchor = document.createElement('a'),
+        queue=[],
+        maxQueueLength;
 
-    originAnchor.href = window.location.href
+    originAnchor.href = window.location.href;
 
+
+
+
+    function request_init(opts){
+        maxQueueLength=opts&&opts.maxQueueLength?opts.maxQueueLength:100;
+        Vue.flow.model('$request',{
+            default:{
+                pending: true,
+                queue:[],//{status,...extra,id:''}
+            },
+
+        });
+
+        return request;
+    }
 
     function request(options){
         var settings = Object.assign({}, options || {}),
             urlAnchor, hashIndex;
-        for (key in request.ajaxSettings) if (settings[key] === undefined) settings[key] = request.ajaxSettings[key]
+        for (key in request.ajaxSettings) if (settings[key] === undefined) settings[key] = request.ajaxSettings[key];
+
+        settings.extra=settings.extra||{};
+        settings.extra.id=(Math.random()+(new Date).getTime()).toString().replace(/\./g,'');
+        settings.extra.status ='pending';
+
+        if(queue.length==maxQueueLength) queue.pop();
+        queue.unshift(settings.extra);
+
+        Vue.flow.dispatch('$request', {queue:queue});
+        Vue.flow.dispatch('$request', {pending:true});
 
         if (!settings.crossDomain) {
-            urlAnchor = document.createElement('a')
-            urlAnchor.href = settings.url
-            urlAnchor.href = urlAnchor.href
-            settings.crossDomain = (originAnchor.protocol + '//' + originAnchor.host) !== (urlAnchor.protocol + '//' + urlAnchor.host)
+            urlAnchor = document.createElement('a');
+            urlAnchor.href = settings.url;
+            urlAnchor.href = urlAnchor.href;
+            settings.crossDomain = (originAnchor.protocol + '//' + originAnchor.host) !== (urlAnchor.protocol + '//' + urlAnchor.host);
         }
 
         if (!settings.url) settings.url = window.location.toString()
@@ -59,6 +88,7 @@
                 abortTimeout;
 
             xhr=settings.xhr();
+            xhr.requestId=settings.extra.id;
 
 			var nativeSetHeader = xhr.setRequestHeader;
 
@@ -139,18 +169,28 @@
     // triggers an extra global event "ajaxBeforeSend" that's like "ajaxSend" but cancelable
     function ajaxBeforeSend(xhr, settings) {
         if (settings.beforeSend(xhr, settings) === false )
-            return false
+            return false;
     }
+
     function ajaxSuccess(data, xhr, settings, resolve) {
-        var status = 'success'
-        settings.success(data, status, xhr)
+        var status = 'success';
+        settings.success(data, status, xhr);
         if (resolve) resolve(data);
-        ajaxComplete(status, xhr, settings)
+        settings.extra.status ='success';
+        Vue.flow.dispatch('$request', {queue:queue});
+        Vue.flow.dispatch('$request', {pending:getPending()});
+        ajaxComplete(status, xhr, settings);
     }
+
     // type: "timeout", "error", "abort", "parsererror"
     function ajaxError(error, type, xhr, settings) {
-        settings.error( xhr, type, error)
-        ajaxComplete(type, xhr, settings)
+        settings.error( xhr, type, error);
+        settings.extra.status ='error';
+        settings.extra.errorType =type;
+        Vue.flow.dispatch('$request', {queue:queue});
+        Vue.flow.dispatch('$request', {pending:getPending()});
+        console.log('@@@ajaxError',error,type,settings,xhr);
+        ajaxComplete(type, xhr, settings);
     }
     // status: "success", "notmodified", "error", "timeout", "abort", "parsererror"
     function ajaxComplete(status, xhr, settings) {
@@ -164,6 +204,15 @@
 
     // Empty function, used as default callback
     function empty() {}
+
+    function getPending(){
+        var pending=false;
+        for(var i=0,l=queue.length;i<l;i++) if(queue[i].status==='peding') {
+            pending=true;
+            break;
+        }
+        return pending;
+    }
 
 
 
@@ -185,6 +234,7 @@
                 }, abortTimeout;
 
                 xhr = {abort: abort};
+                xhr.requestId = options.extra.id;
 
 
             function handler(e, errorType) {
@@ -203,9 +253,9 @@
 
                 window[callbackName] = originalCallback
                 if (responseData && typeof originalCallback === 'function')
-                    originalCallback(responseData[0])
+                    originalCallback(responseData[0]);
 
-                originalCallback = responseData = undefined
+                originalCallback = responseData = undefined;
             }
 
             script.onload = handler;
@@ -217,7 +267,7 @@
             }
 
             window[callbackName] = function () {
-                responseData = arguments
+                responseData = arguments;
             }
 
             script.src = options.url.replace(/\?(.+)=\?/, '?callback=' + callbackName)
@@ -393,12 +443,12 @@
 
 
     if (typeof module === 'object' && module.exports) {
-        module.exports = request
+        module.exports = request_init;
     }
     else if (typeof define === 'function' && define.amd) {
         define(function () {
-            return request
-        })
+            return request_init;
+        });
     }
 
 })();
