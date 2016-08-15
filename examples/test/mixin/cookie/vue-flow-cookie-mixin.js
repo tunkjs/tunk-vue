@@ -97,18 +97,18 @@
     cookie.defaults = {};
 
     cookie.remove = function (key, attributes) {
-        set(key, '', Object.assign(attributes, {
+        set(key, '', Object.assign({},attributes, {
             expires: -1
         }));
     };
 
 
     if (typeof module === 'object' && module.exports) {
-        module.exports = cookie
+        module.exports = {cookie:cookie};
     }
     else if (typeof define === 'function' && define.amd) {
         define(function () {
-            return cookie
+            return {cookie:cookie};
         })
     }
 

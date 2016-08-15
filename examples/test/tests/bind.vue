@@ -37,21 +37,21 @@ export default {
 
 	data(){
 		return {
-			units:[
-				{desc:'beforeStore 1',ok:false,meta:{}},
-				{desc:'beforeStore 2',ok:false,meta:{}},
-				{desc:'beforeFlowIn 1',ok:false,meta:{}},
-				{desc:'beforeFlowIn 2',ok:false,meta:{}}
-			]
+			units:{
+				beforeStore1:false,
+				beforeStore2:false,
+				beforeFlowIn1:false,
+				beforeFlowIn2:false
+			}
 		};
 	},
 	components:{
 		test:require('./base.vue'),
 	},
-    pipes: {
+    flow: {
       count: 'bind.count'
     },
-	action:{
+	actions:{
 		click:'bind.click',
 	},
 

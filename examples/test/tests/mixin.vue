@@ -36,10 +36,10 @@ Vue.flow.model('bind',{
 });
 
 export default {
-    pipes: {
+    flow: {
       count: 'bind.count'
     },
-	action:{
+	actions:{
 		click:'bind.click',
 	},
 	ready(){

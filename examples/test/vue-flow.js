@@ -171,9 +171,9 @@
 			Vue.mixin({
 
 				init: function () {
-					if (this.$options.pipes) {
-						for (var x in this.$options.pipes) if (this.$options.pipes.hasOwnProperty(x)) {
-							var statePath = this.$options.pipes[x].split('.');
+					if (this.$options.flow) {
+						for (var x in this.$options.flow) if (this.$options.flow.hasOwnProperty(x)) {
+							var statePath = this.$options.flow[x].split('.');
 							connections[statePath[0]] = connections[statePath[0]] || [];
 							connections[statePath[0]].push({
 								comp: this,
@@ -186,10 +186,10 @@
 						}
 					}
 
-					if(this.$options.action){
+					if(this.$options.actions){
 						var action;
-						for (var x in this.$options.action) if (this.$options.action.hasOwnProperty(x)) {
-							action = this.$options.action[x].split('.');
+						for (var x in this.$options.actions) if (this.$options.actions.hasOwnProperty(x)) {
+							action = this.$options.actions[x].split('.');
 							if (!models[action[0]]) throw 'the model ' + action[0] + ' is not exist';
 							if (!models[action[0]][action[1]]) throw 'the action ' + action[1] + ' of model ' + action[0] + ' is not exist';
 							this[x]=(function(modelName,actionName){
@@ -204,10 +204,10 @@
 
 				},
 				beforeDestroy: function () {
-					if (this.$options.pipes) {
+					if (this.$options.flow) {
 						var statePath, tmp;
-						for (var x in this.$options.pipes) if (this.$options.pipes.hasOwnProperty(x)) {
-							statePath = this.$options.pipes[x].split('.');
+						for (var x in this.$options.flow) if (this.$options.flow.hasOwnProperty(x)) {
+							statePath = this.$options.flow[x].split('.');
 							tmp = [];
 							for (var i = 0, l = connections[statePath[0]].length; i < l; i++) {
 								if (connections[statePath[0]][i].comp !== this) tmp.push(connections[statePath[0]][i]);

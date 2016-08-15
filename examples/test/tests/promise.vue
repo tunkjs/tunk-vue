@@ -21,7 +21,7 @@ Vue.flow.model('promise',{
                 setTimeout(()=>{
                     resolve('define');
                     dispatch('promise.test_return');
-                },1000);
+                },100);
             });
         })();
 
@@ -34,7 +34,7 @@ Vue.flow.model('promise',{
                 return new Promise(function(resolve,reject){
                     setTimeout(()=>{
                         resolve('return');
-                    },3000);
+                    },200);
                 });
             })();
             return {t};
@@ -45,10 +45,10 @@ Vue.flow.model('promise',{
 });
 
 export default {
-    pipes: {
+    flow: {
       t: 'promise.t'
     },
-    action:{
+    actions:{
         test_define:'promise.test_define'
     },
 	data(){

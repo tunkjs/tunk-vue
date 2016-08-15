@@ -4,16 +4,17 @@
 	<h4>
 			<i class="fa {{ok?'fa-check-circle':'fa-times-circle'}}"></i> {{title}}
 	</h4>
-	<span class="pull-right">
+	<div class="pull-right">
     	<span class="label {{item?'label-success':'label-danger'}}" v-for='(key, item) in units'>{{key}}</span>
-	</span>
+	</div>
 	<div>
 		<slot></slot>
 	</div>
   </section>
 </template>
 <style>
-	section{
+	section.alert{
+		padding:5px !important;
 		margin:5px;
 		overflow:hidden;
 		margin-bottom:5px !important;
@@ -23,11 +24,14 @@
 		
 	}
 	span.label{
-		margin:5px;
+		margin:0 5px;
 		font-size:12px;
 		font-weight:normal;
+		display:inline-block;
+
 	}
 	div{
+		width:50%;
 		margin:5px;
 	}
 </style>

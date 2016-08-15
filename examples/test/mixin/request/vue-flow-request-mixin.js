@@ -23,7 +23,6 @@
         if (!settings.crossDomain) {
             urlAnchor = document.createElement('a')
             urlAnchor.href = settings.url
-            // cleans up URL for .href (IE only), see https://github.com/madrobby/zepto/pull/1049
             urlAnchor.href = urlAnchor.href
             settings.crossDomain = (originAnchor.protocol + '//' + originAnchor.host) !== (urlAnchor.protocol + '//' + urlAnchor.host)
         }
@@ -48,17 +47,20 @@
             return ajaxJSONP(settings);
         }
 
-        var promise= new Promise(function(resolve, reject){
+
+		var xhr;
+        var promise= new Promise(function(resolve){
 
             var mime = settings.accepts[dataType],
                 headers = { },
                 setHeader = function(name, value) { headers[name.toLowerCase()] = [name, value] },
                 protocol = /^([\w-]+:)\/\//.test(settings.url) ? RegExp.ajax1 : window.location.protocol,
-                xhr = settings.xhr(),
-                nativeSetHeader = xhr.setRequestHeader,
+                nativeSetHeader,
                 abortTimeout;
 
-            promise.xhr=xhr;
+            xhr=settings.xhr();
+
+			var nativeSetHeader = xhr.setRequestHeader;
 
             if (!settings.crossDomain) setHeader('X-Requested-With', 'XMLHttpRequest')
             setHeader('Accept', mime || '*/*');
@@ -94,27 +96,21 @@
                                 else if (dataType == 'json') result = blankRE.test(result) ? null : JSON.parse(result);
                             } catch (e) { error = e }
 
-                            if (error) return ajaxError(error, 'parsererror', xhr, settings, function(args){
-                                reject(args);
-                            })
+                            if (error) return ajaxError(error, 'parsererror', xhr, settings)
                         }
 
                         ajaxSuccess(result, xhr, settings, function(args){
                             resolve(args);
                         });
                     } else {
-                        ajaxError(xhr.statusText || null, xhr.status ? 'error' : 'abort', xhr, settings, function(args){
-                            reject(args);
-                        });
+                        ajaxError(xhr.statusText || null, xhr.status ? 'error' : 'abort', xhr, settings);
                     }
                 }
             }
 
             if (ajaxBeforeSend(xhr, settings) === false) {
                 xhr.abort()
-                ajaxError(null, 'abort', xhr, settings, function(args){
-                    reject(args);
-                });
+                ajaxError(null, 'abort', xhr, settings);
                 return;
             }
 
@@ -128,15 +124,15 @@
             if (settings.timeout > 0) abortTimeout = setTimeout(function(){
                 xhr.onreadystatechange = empty;
                 xhr.abort();
-                ajaxError(null, 'timeout', xhr, settings, function(args){
-                    reject(args);
-                })
+                ajaxError(null, 'timeout', xhr, settings)
             }, settings.timeout);
 
             // avoid sending empty string (#319);
             xhr.send(settings.data ? settings.data : null);
 
         });
+
+		promise.xhr=xhr;
 
         return promise;
     }
@@ -148,13 +144,12 @@
     function ajaxSuccess(data, xhr, settings, resolve) {
         var status = 'success'
         settings.success(data, status, xhr)
-        if (resolve) resolve({data:data, status:status, xhr:xhr});
+        if (resolve) resolve(data);
         ajaxComplete(status, xhr, settings)
     }
     // type: "timeout", "error", "abort", "parsererror"
-    function ajaxError(error, type, xhr, settings, reject) {
+    function ajaxError(error, type, xhr, settings) {
         settings.error( xhr, type, error)
-        if (reject) reject({xhr:xhr, type:type, error:error});
         ajaxComplete(type, xhr, settings)
     }
     // status: "success", "notmodified", "error", "timeout", "abort", "parsererror"
@@ -173,20 +168,23 @@
 
 
     function ajaxJSONP(options){
-        if (!('type' in options)) return request.ajax(options);
+        if (!('type' in options)) return request.request(options);
+		var xhr;
+        var promise= new Promise(function(resolve) {
 
-        var promise= new Promise(function(resolve, reject) {
+			
 
             var _callbackName = options.jsonpCallback,
                 callbackName = (typeof _callbackName === 'function' ?
-                        _callbackName() : _callbackName) || ('Zepto' + (jsonpID++)),
+                        _callbackName() : _callbackName) || ('request' + (jsonpID++)),
                 script = document.createElement('script'),
                 originalCallback = window[callbackName],
                 responseData,
                 abort = function (errorType) {
                     handler({type: 'error'}, errorType || 'abort')
-                },
-                xhr = {abort: abort}, abortTimeout
+                }, abortTimeout;
+
+                xhr = {abort: abort};
 
 
             function handler(e, errorType) {
@@ -196,9 +194,7 @@
                 script.onerror = null;
 
                 if (e.type == 'error' || !responseData) {
-                    ajaxError(null, errorType || 'error', xhr, options, function (args) {
-                        reject(args);
-                    })
+                    ajaxError(null, errorType || 'error', xhr, options)
                 } else {
                     ajaxSuccess(responseData[0], xhr, options, function (args) {
                         resolve(args);
@@ -224,18 +220,20 @@
                 responseData = arguments
             }
 
-            script.src = options.url.replace(/\?(.+)=\?/, '?ajax1=' + callbackName)
+            script.src = options.url.replace(/\?(.+)=\?/, '?callback=' + callbackName)
             document.head.appendChild(script)
 
             if (options.timeout > 0) abortTimeout = setTimeout(function () {
                 abort('timeout')
-            }, options.timeout)
+            }, options.timeout);
+
+			
 
         });
 
-        promise.xhr = xhr;
+		promise.xhr = xhr;
 
-        return promise;
+		return promise;
 
     }
 
@@ -300,7 +298,7 @@
             options.url = appendQuery(options.url, options.data), options.data = undefined
     }
 
-    request.request = request;
+    
 
     // handle optional data/success arguments
     function parseArguments() {
@@ -308,7 +306,7 @@
         for(var i=0,l=arguments.length;i<l;i++){
             switch(typeof arguments[i]){
                 case'string':
-                    if(!url) dataType = arguments[i];
+                    if(url) dataType = arguments[i];
                     else url = arguments[i];
                     break;
                 case'object':
@@ -336,26 +334,28 @@
         function empty(){}
     }
 
+	request.request = request;
+
     request.get = function(/* url, data, success, error, dataType */){
-        return request.ajax(parseArguments.apply(null, arguments))
+        return request.request(parseArguments.apply(null, arguments))
     }
 
     request.post = function(/* url, data, success, error, dataType */){
         var options = parseArguments.apply(null, arguments)
         options.type = 'POST'
-        return request.ajax(options)
+        return request.request(options)
     }
 
-    request.getJSON = function(/* url, data, success, error */){
+    request.getJson = function(/* url, data, success, error */){
         var options = parseArguments.apply(null, arguments);
         options.dataType = 'json';
-        return request.ajax(options);
+        return request.request(options);
     }
 
     request.jsonp = function(/* url, data, success, error */){
         var options = parseArguments.apply(null, arguments);
         options.dataType = 'jsonp';
-        return request.ajax(options);
+        return request.request(options);
     }
 
 

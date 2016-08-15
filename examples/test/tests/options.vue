@@ -39,7 +39,7 @@ Vue.flow.model('options',{
 });
 
 export default {
-    pipes: {
+    flow: {
       t: 'options.t'
     },
 	data(){
@@ -86,7 +86,7 @@ export default {
 		}
 	},
 
-	action:{
+	actions:{
 		test_dispatch:'options.test_dispatch',
 		inject_action_multi_options:'options.test_action_multi_options'
 	},

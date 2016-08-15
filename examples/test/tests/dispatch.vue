@@ -30,7 +30,7 @@ Vue.flow.model('options',{
 });
 
 export default {
-    pipes: {
+    flow: {
       t: 'options.t'
     },
 	data(){

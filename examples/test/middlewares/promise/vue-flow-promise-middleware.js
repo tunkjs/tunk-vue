@@ -6,7 +6,7 @@
                 return next(arguments);
             }
             promise.then(function(result){
-                next([result]);
+                setTimeout(function(){next([result]);});
             });
         };
     };
