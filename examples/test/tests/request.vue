@@ -1,7 +1,7 @@
 <template>
   <test title="request" :units='units'>
 	  <b>pending:{{p}} ---</b>
-	  <p v-for="item in q">{{item.id}} --- {{item.status}} --- <span class="label label-info" v-for="(key,tip) in item">{{key+':'+tip}} -- </span></p>
+	  <queue v-if='show'></queue>
   </test>
 </template>
 
@@ -24,7 +24,7 @@ Vue.flow.model('request',{
 	test_jsonp_abort: function(){
 		var self = this;
 		var jsonp = this.jsonp('http://search.lefeng.com/ajax/getHotKeys',function(v){},function(e){
-			console.log('test_jsonp_abort',arguments);
+			//console.log('test_jsonp_abort',arguments);
 			self.dispatch({t:'jsonp_abort'});
 		});
 		jsonp.xhr.abort();
@@ -40,7 +40,7 @@ Vue.flow.model('request',{
 	test_json_abort: function(){
 		var self = this;
 		var json = this.getJson('http://search.lefeng.com/ajax/getHotKeys',function(v){},function(e){
-			console.log('test_json_abort',arguments);
+			//console.log('test_json_abort',arguments);
 			self.dispatch({t:'json_abort'});
 		});
 		json.xhr.abort();
@@ -55,7 +55,13 @@ Vue.flow.model('request',{
 				error:'失败',
 				pending:'加载中...',
 			},
-			success:function(v){},
+			success:function(v){
+				setTimeout(()=>{
+					console.log(json);
+					self.dispatch('$request.remove',json.id);
+					self.dispatch({t:'request_model_remove'});
+				},2000);
+			},
 		});
 	},
 
@@ -74,9 +80,10 @@ export default {
 		json:'request.test_json',
 		json_promise:'request.test_json_promise',
 		json_abort:'request.test_json_abort',
-		request_model:'request.test_$request_model',
-
+		request_model_remove:'request.test_$request_model',
 	},
+
+
 	data(){
 		return {
 			units:{
@@ -86,16 +93,20 @@ export default {
 				json:false,
 				json_promise:false,
 				json_abort:false,
-				request_model:false,
-			}
+				request_model_remove:false,
+			},
+			show:true,
 		};
 	},
+
 	watch:{
 		t:function(v){
 			this.$set('units.'+v,true);
 		}
 	},
+
 	components:{
+		queue:require('./destroy.vue'),
 		test:require('./base.vue'),
 	},
 
@@ -110,12 +121,12 @@ export default {
 			self.json_abort();
 		},10);
 		setTimeout(function(){
-			self.request_model();
+			self.request_model_remove();
 		},2000);
 
-		
+		setTimeout(()=>{
+			self.$set('show',!self.$data.show);
+		},5000);
 	}
-    
-
 }
 </script>

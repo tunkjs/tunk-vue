@@ -51,6 +51,7 @@ export default {
     actions:{
         test_define:'promise.test_define'
     },
+
 	data(){
 		return {
 			units:{

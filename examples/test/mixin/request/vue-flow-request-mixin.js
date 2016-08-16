@@ -19,8 +19,6 @@
     originAnchor.href = window.location.href;
 
 
-
-
     function request_init(opts){
         maxQueueLength=opts&&opts.maxQueueLength?opts.maxQueueLength:100;
         Vue.flow.model('$request',{
@@ -28,9 +26,13 @@
                 pending: true,
                 queue:[],//{status,...extra,id:''}
             },
-
+			remove:function(id){
+				var queue = this.getState().queue,queu=[];
+				for(var i=0,l=queue.length;i<l;i++)
+					if(queue[i].id!==id) queu.push(queue[i]);
+				return {queue:queu};
+			}
         });
-
         return request;
     }
 
@@ -88,7 +90,7 @@
                 abortTimeout;
 
             xhr=settings.xhr();
-            xhr.requestId=settings.extra.id;
+            //xhr.requestId=settings.extra.id;
 
 			var nativeSetHeader = xhr.setRequestHeader;
 
@@ -163,6 +165,7 @@
         });
 
 		promise.xhr=xhr;
+		promise.id=settings.extra.id;
 
         return promise;
     }
@@ -189,7 +192,7 @@
         settings.extra.errorType =type;
         Vue.flow.dispatch('$request', {queue:queue});
         Vue.flow.dispatch('$request', {pending:getPending()});
-        console.log('@@@ajaxError',error,type,settings,xhr);
+        //console.log('@@@ajaxError',error,type,settings,xhr);
         ajaxComplete(type, xhr, settings);
     }
     // status: "success", "notmodified", "error", "timeout", "abort", "parsererror"
@@ -234,7 +237,7 @@
                 }, abortTimeout;
 
                 xhr = {abort: abort};
-                xhr.requestId = options.extra.id;
+                //xhr.requestId = options.extra.id;
 
 
             function handler(e, errorType) {
@@ -282,6 +285,7 @@
         });
 
 		promise.xhr = xhr;
+		promise.id=options.extra.id;
 
 		return promise;
 

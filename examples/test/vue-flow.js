@@ -12,6 +12,8 @@
 
 		install: function (Vue) {
 
+			//数据隔离模式
+
 			var store = {},
 				models = {},
 				connections = {},
@@ -53,10 +55,10 @@
 
 						function dispatch() {
 							return run_middlewares(this, arguments, {
-								modelName:modelName,
-								actionName:actionName,
-								models:models,
-								store:store,
+								modelName: modelName,
+								actionName: actionName,
+								models: models,
+								store: store,
 							}, dispatch);
 						}
 					})(name, x);
@@ -67,8 +69,8 @@
 			};
 
 
-			Vue.flow.dispatch=function(modelName, options) {
-				if(modelName && modelName.constructor===String)
+			Vue.flow.dispatch = function (modelName, options) {
+				if (modelName && modelName.constructor === String)
 					storeState(options, modelName, 'Vue.flow');
 				else throw 'the first argument should be a model name the second shuould be a plain object';
 			};
@@ -86,9 +88,9 @@
 			};
 
 			Vue.flow.addMiddleware = function (middleware) {
-				if(typeof middleware === 'object' && middleware.constructor === Array)
+				if (typeof middleware === 'object' && middleware.constructor === Array)
 					middlewares = middlewares.concat(middleware);
-				else if(typeof middleware === 'function') middlewares.push(middleware);
+				else if (typeof middleware === 'function') middlewares.push(middleware);
 			};
 
 			Vue.flow.mixin = function (obj) {
@@ -113,22 +115,21 @@
 						}
 					}
 
-					if(this.$options.actions){
+					if (this.$options.actions) {
 						var action;
 						for (var x in this.$options.actions) if (this.$options.actions.hasOwnProperty(x)) {
 							action = this.$options.actions[x].split('.');
 							if (!models[action[0]]) throw 'the model ' + action[0] + ' is not exist';
 							if (!models[action[0]][action[1]]) throw 'the action ' + action[1] + ' of model ' + action[0] + ' is not exist';
-							this[x]=(function(modelName,actionName){
-								return function(){
-									if(arguments[0] && arguments[0].cancelBubble!==undefined && arguments[0].srcElement)
+							this[x] = (function (modelName, actionName) {
+								return function () {
+									if (arguments[0] && arguments[0].cancelBubble !== undefined && arguments[0].srcElement)
 										models[modelName][actionName].call(models[modelName]);
 									else apply(models[modelName][actionName], arguments, models[modelName]);
 								};
 							})(action[0], action[1]);
 						}
 					}
-
 				},
 				beforeDestroy: function () {
 					if (this.$options.flow) {
@@ -149,7 +150,7 @@
 						else name = name.split('.');
 						if (!models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
 						if (!models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
-						apply(models[name[0]][name[1]], Array.prototype.slice.call(arguments,1), models[name[0]]);
+						apply(models[name[0]][name[1]], Array.prototype.slice.call(arguments, 1), models[name[0]]);
 					}
 				}
 			});
@@ -198,22 +199,22 @@
 
 
 			function run_middlewares(model, args, context, dispatch) {
-				var index=0;
+				var index = 0;
 
 				return next(args);
 
-				function next(args){
-					if(typeof args !== 'object'|| isNaN(args.length)) throw 'please make sure the param of next is type of array or argument';
-					if(index<middlewares.length)
+				function next(args) {
+					if (typeof args !== 'object' || isNaN(args.length)) throw 'please make sure the param of next is type of array or argument';
+					if (index < middlewares.length)
 						return apply(middlewares[index++](dispatch, next, end, context), args, model);
 					else return end(args[0]);
 				}
 
-				function end(result){
-					if(!result) return;
-					if(result.constructor !== Object) {
+				function end(result) {
+					if (!result) return;
+					if (result.constructor !== Object) {
 						console.log(arguments);
-						throw 'the argument of end should be a plain object';
+						throw 'the argument of end should be a plain data object';
 					}
 					index = middlewares.length;
 					result = run_beforeStore_hooks(result, store[context.modelName]);
@@ -228,15 +229,18 @@
 					pipes = connections[modelName],
 					changedFields = Object.keys(obj),
 					meta,
-					changedState=clone(obj);
+					changedState = clone(obj),
+					values = {};
 
 				Object.assign(state, changedState);
 
-				if( pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
-					// 第2层根据changedFields判断是否有更新，过滤一把
+				if (pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
+
+					// 只更新 changedFields 字段
 					if (pipes[i].statePath[1] && changedFields.indexOf(pipes[i].statePath[1]) === -1) continue;
-					// 数据流入前hook
-					pathValue_ = pathValue(pipes[i].statePath);
+
+					//减少克隆次数，分发出去的数据用同一个副本，减少调用 pathValue 
+					pathValue_ = values[pipes[i].statePath] || (values[pipes[i].statePath] = pathValue(pipes[i].statePath));
 
 					meta = {
 						name: pipes[i].dataName,
@@ -244,6 +248,7 @@
 						action: modelName + '.' + actionName
 					};
 
+					// 数据流入前hook
 					run_beforeFlowIn_hooks(pipes[i].comp, meta);
 
 					if (pipes[i].comp.$options.beforeFlowIn)
@@ -272,20 +277,23 @@
 				}
 			}
 
+			//提升效率空间：支持两层 && 不克隆
+
+			//支持5层
 			function pathValue(statePath) {
 				var state = store[statePath[0]];
 				if (!statePath[1]) return clone(state);
 				else {
-					state = isNaN(statePath[1])?state[statePath[1]]:(state[statePath[1]]||state[parseInt(statePath[1])]);
+					state = isNaN(statePath[1]) ? state[statePath[1]] : (state[statePath[1]] || state[parseInt(statePath[1])]);
 					if (!statePath[2] || typeof state !== 'object') return clone(state);
 					else {
-						state = isNaN(statePath[2])?state[statePath[2]]:(state[statePath[2]]||state[parseInt(statePath[2])]);
+						state = isNaN(statePath[2]) ? state[statePath[2]] : (state[statePath[2]] || state[parseInt(statePath[2])]);
 						if (!statePath[3] || typeof state !== 'object') return clone(state);
 						else {
-							state = isNaN(statePath[3])?state[statePath[3]]:(state[statePath[3]]||state[parseInt(statePath[3])]);
+							state = isNaN(statePath[3]) ? state[statePath[3]] : (state[statePath[3]] || state[parseInt(statePath[3])]);
 							if (!statePath[4] || typeof state !== 'object') return clone(state);
 							else {
-								return clone(isNaN(statePath[4])?state[statePath[4]]:(state[statePath[4]]||state[parseInt(statePath[4])]));
+								return clone(isNaN(statePath[4]) ? state[statePath[4]] : (state[statePath[4]] || state[parseInt(statePath[4])]));
 							}
 						}
 					}
@@ -298,28 +306,22 @@
 				else return obj;
 			}
 
-			function apply(func, args, context){
-				switch (args.length){
+			function apply(func, args, context) {
+				switch (args.length) {
 					case 0:
-						return context?func.call(context):func();
-						break;
+						return context ? func.call(context) : func();
 					case 1:
-						return context?func.call(context, args[0]):func(args[0]);
-						break;
+						return context ? func.call(context, args[0]) : func(args[0]);
 					case 2:
-						return context?func.call(context, args[0], args[1]):func(args[0], args[1]);
-						break;
+						return context ? func.call(context, args[0], args[1]) : func(args[0], args[1]);
 					case 3:
-						return context?func.call(context, args[0], args[1], args[2]):func(args[0], args[1], args[2]);
-						break;
+						return context ? func.call(context, args[0], args[1], args[2]) : func(args[0], args[1], args[2]);
 					case 4:
-						return context?func.call(context, args[0], args[1], args[2], args[3]):func(args[0], args[1], args[2], args[3]);
-						break;
+						return context ? func.call(context, args[0], args[1], args[2], args[3]) : func(args[0], args[1], args[2], args[3]);
 					case 5:
-						return context?func.call(context, args[0], args[1], args[2], args[3], args[4]):func(args[0], args[1], args[2], args[3], args[4]);
-						break;
+						return context ? func.call(context, args[0], args[1], args[2], args[3], args[4]) : func(args[0], args[1], args[2], args[3], args[4]);
 					default:
-						return func.apply(context||this,args);
+						return func.apply(context || this, args);
 
 				}
 
