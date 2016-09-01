@@ -25,7 +25,7 @@ export default {
 	},
     methods:{
 		incrementAsync(){
-			this.$action('counter.incrementAsync');
+			this.dispatch('counter.incrementAsync');
 		}
 	}
 }

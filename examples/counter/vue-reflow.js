@@ -164,7 +164,7 @@ reflow.install=function(Vue){
             }
         },
         methods: {
-            $action: function (name, opts) {
+            dispatch: function (name, opts) {
                 if (name.indexOf('.') === -1) throw 'please check the argument of $action';
                 else name = name.split('.');
                 if (!models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
