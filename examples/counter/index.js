@@ -8,7 +8,7 @@ Vue.use(reflow);
 
 reflow.addMiddleware([actionMiddleware]);
 
-require('./models/counter2');
+require('./reflow/counter2');
 
 new Vue({
     el: 'body',
