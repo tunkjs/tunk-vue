@@ -1,3 +1,6 @@
+import React,{ Component } from 'react'
+
+
 var store = {},
     models = {},
     connections = [],
@@ -6,26 +9,26 @@ var store = {},
     hook_beforeStore = [],
     hook_beforeFlowIn = [];
 
-var flows = {
-    config: {
-        cloneMode: 'deep', //deep,shallow
+var flows ={
+    config:{
+        cloneMode:'deep', //deep,shallow
     },
 };
 
 
-flows.action = function action(target, property, descriptor) {
-    target[property]._isAction_ = true;
+flows.action= function action(target, property, descriptor){
+    target[property]._isAction_=true;
     //return descriptor;
 }
 
 
-flows.extend = function (opt) {
+flows.extend =  function(opt){
     console.log(arguments);
-    if (typeof opt === 'function') {
+    if(typeof opt === 'function'){
         return extend(opt.name, opt);
-    } else return function (target, property, descriptor) {
-        return extend(target.name, target);
-    };
+    }else return function(target, property, descriptor){
+            return extend(target.name, target);
+        };
 }
 
 function extend(name, target) {
@@ -35,7 +38,7 @@ function extend(name, target) {
     if (!name || !protos) throw 'two arguments are required';
 
     Object.assign(protos, mixins, {
-        getState: function getState(otherModelName) {
+        getState : function getState(otherModelName) {
             if (!otherModelName) return clone(store[name]);
             else return clone(store[otherModelName]);
         }
@@ -54,9 +57,9 @@ function extend(name, target) {
 
     var properties = Object.getOwnPropertyNames(target.prototype);
 
-    for (var i = 0, l = properties.length, x = properties[i]; i < l; i++, x = properties[i]) {
+    for (var i=0,l=properties.length,x=properties[i];i<l;i++,x=properties[i]) {
 
-        if (protos[x] && protos[x]._isAction_)
+        if(protos[x]&&protos[x]._isAction_)
             protos[x] = (function (modelName, actionName, originAction) {
 
                 protos.dispatch = dispatch;
@@ -88,7 +91,7 @@ function extend(name, target) {
 
 flows.dispatch = function (modelName, options) {
     if (modelName && modelName.constructor === String)
-        storeState(options, modelName, 'Vue.flow');
+        storeState(options, modelName, 'flows.');
     else throw 'the first argument should be a model name the second shuould be a plain object';
 };
 
@@ -114,69 +117,18 @@ flows.mixin = function (obj) {
     Object.assign(mixins, obj);
 };
 
-
-flows.install=function(Vue){
-
-    Vue.mixin({
-
-        init: function () {
-            if (this.$options.state) {
-                for (var x in this.$options.state) if (this.$options.state.hasOwnProperty(x)) {
-                    var statePath = this.$options.state[x].split('.');
-                    connections[statePath[0]] = connections[statePath[0]] || [];
-                    connections[statePath[0]].push({
-                        comp: this,
-                        dataName: x,
-                        statePath: statePath,
-                    });
-
-                    //设置组件默认数据
-                    Vue.util.defineReactive(this, x, pathValue(statePath));
-                }
-            }
-
-            if (this.$options.actions) {
-                var action;
-                for (var x in this.$options.actions) if (this.$options.actions.hasOwnProperty(x)) {
-                    action = this.$options.actions[x].split('.');
-                    if (!models[action[0]]) throw 'the model ' + action[0] + ' is not exist';
-                    if (!models[action[0]][action[1]]) throw 'the action ' + action[1] + ' of model ' + action[0] + ' is not exist';
-                    this[x] = (function (modelName, actionName) {
-                        return function () {
-                            if (arguments[0] && arguments[0].cancelBubble !== undefined && arguments[0].srcElement)
-                                models[modelName][actionName].call(models[modelName]);
-                            else apply(models[modelName][actionName], arguments, models[modelName]);
-                        };
-                    })(action[0], action[1]);
-                }
-            }
-        },
-        beforeDestroy: function () {
-            if (this.$options.state) {
-                var statePath, tmp;
-                for (var x in this.$options.state) if (this.$options.state.hasOwnProperty(x)) {
-                    statePath = this.$options.state[x].split('.');
-                    tmp = [];
-                    for (var i = 0, l = connections[statePath[0]].length; i < l; i++) {
-                        if (connections[statePath[0]][i].comp !== this) tmp.push(connections[statePath[0]][i]);
-                    }
-                    connections[statePath[0]] = tmp;
-                }
-            }
-        },
-        methods: {
-            $action: function (name, opts) {
-                if (name.indexOf('.') === -1) throw 'please check the argument of $action';
-                else name = name.split('.');
-                if (!models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
-                if (!models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
-                apply(models[name[0]][name[1]], Array.prototype.slice.call(arguments, 1), models[name[0]]);
-            }
+flows.addMiddleware(function(dispatch, next, end, context){
+    return function(name, options){
+        if(typeof name !== 'string') {
+            return next(arguments);
         }
-    });
-}
-
-
+        if (name.indexOf('.') === -1) name = [context.modelName, name];
+        else name = name.split('.');
+        if (!context.models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
+        if (!context.models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
+        return apply(context.models[name[0]][name[1]], Array.prototype.slice.call(arguments,1), context.models[name[0]]);
+    };
+});
 
 flows.mixin({
 
@@ -213,6 +165,8 @@ flows.mixin({
     clone: clone,
 
 });
+
+
 
 function run_middlewares(model, args, context, dispatch) {
     var index = 0;
@@ -267,10 +221,10 @@ function storeState(obj, modelName, actionName) {
         // 数据流入前hook
         run_beforeFlowIn_hooks(pipes[i].comp, meta);
 
-        if (pipes[i].comp.$options.beforeFlowIn)
-            pipes[i].comp.$options.beforeFlowIn.call(pipes[i].comp, meta);
+        if (pipes[i].comp.beforeFlowIn)
+            pipes[i].comp.beforeFlowIn.call(pipes[i].comp, meta);
 
-        pipes[i].comp.$set(pipes[i].dataName, pathValue_);
+        pipes[i].comp.setState({[pipes[i].dataName]:pathValue_});
 
     }
 
@@ -293,7 +247,90 @@ function run_beforeFlowIn_hooks(comp, meta) {
     }
 }
 
-//提升效率空间：支持两层 && 不克隆
+flows.connect = function connect(pipes = {}, actions={}) {
+
+    if(typeof pipes === 'function') {
+        pipes={};
+        return connect_(arguments[0]);
+    }
+
+    return connect_;
+
+    function connect_(TargetComponent) {
+
+        if (Object.keys(actions).length) {
+            var action;
+            for (var x in actions) if (actions.hasOwnProperty(x)) {
+                action = actions[x].split('.');
+                if (!models[action[0]]) throw 'the model ' + action[0] + ' is not exist';
+                if (!models[action[0]][action[1]]) throw 'the action ' + action[1] + ' of model ' + action[0] + ' is not exist';
+                TargetComponent.prototype[x] = (function (modelName, actionName) {
+                    return function () {
+                        models[modelName][actionName].call(models[modelName], Array.prototype.slice.call(arguments));
+                    };
+                })(action[0], action[1]);
+            }
+        }
+
+        TargetComponent.prototype.dispatch=function (name, opts) {
+            if (name.indexOf('.') === -1) throw 'please check the argument of dispatch';
+            else name = name.split('.');
+            if (!models[name[0]]) throw 'the model ' + name[0] + ' is not exist';
+            if (!models[name[0]][name[1]]) throw 'the action ' + name[1] + ' of model ' + name[0] + ' is not exist';
+            models[name[0]][name[1]](opts);
+        };
+
+
+        class Flows extends Component {
+
+            constructor() {
+                super(...arguments)
+                if(this._FLOWS_INIT_) this.state = this._FLOWS_INIT_();
+                else this.state={}
+            }
+
+            _FLOWS_INIT_ (){
+
+                var default_props={};
+
+                if (Object.keys(pipes).length) {
+                    for (var x in pipes) if (pipes.hasOwnProperty(x)) {
+                        var statePath = pipes[x].split('.');
+                        connections[statePath[0]] = connections[statePath[0]] || [];
+                        connections[statePath[0]].push({
+                            comp: this,
+                            dataName: x,
+                            statePath: statePath,
+                        });
+                        //设置组件默认数据
+                        default_props[x] = pathValue(statePath);
+                    }
+                }
+
+                return default_props;
+            }
+
+            componentWillUnmount(){
+                if (Object.keys(pipes).length) {
+                    var statePath, tmp;
+                    for (var x in pipes) if (pipes.hasOwnProperty(x)) {
+                        statePath = pipes[x].split('.');
+                        tmp = [];
+                        for (var i = 0, l = connections[statePath[0]].length; i < l; i++) {
+                            if (connections[statePath[0]][i].comp !== this) tmp.push(connections[statePath[0]][i]);
+                        }
+                        connections[statePath[0]] = tmp;
+                    }
+                }
+            }
+
+            render() {
+                return <TargetComponent {...this.state} {...this.props} />
+            }
+        }
+        return Flows
+    }
+}
 
 //支持5层
 function pathValue(statePath) {
@@ -318,9 +355,9 @@ function pathValue(statePath) {
 
 function clone(obj) {
     if (typeof obj === 'object')
-        return flows.config.cloneMode === 'deep' ?
-            JSON.parse(JSON.stringify(obj)) :
-            ( obj.constructor === Array ? obj.slice() : Object.assign({}, obj) );
+        return flows.config.cloneMode==='deep' ?
+                JSON.parse(JSON.stringify(obj)):
+                ( obj.constructor===Array ? obj.slice() : Object.assign({},obj) );
     else return obj;
 }
 
@@ -342,18 +379,15 @@ function apply(func, args, context) {
             return func.apply(context || this, args);
 
     }
-
 }
-
-
 
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = flows;
+    module.exports = flows
 }
 else if (typeof define === 'function' && define.amd) {
-    define(function () {
-        return flows;
-    })
+    define(function () { return flows })
 }
+
+
 

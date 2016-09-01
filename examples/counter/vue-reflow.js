@@ -6,20 +6,19 @@ var store = {},
     hook_beforeStore = [],
     hook_beforeFlowIn = [];
 
-var flows = {
+var reflow = {
     config: {
         cloneMode: 'deep', //deep,shallow
     },
 };
 
 
-flows.action = function action(target, property, descriptor) {
+reflow.action = function action(target, property, descriptor) {
     target[property]._isAction_ = true;
-    //return descriptor;
 }
 
 
-flows.extend = function (opt) {
+reflow.extend = function (opt) {
     console.log(arguments);
     if (typeof opt === 'function') {
         return extend(opt.name, opt);
@@ -86,13 +85,13 @@ function extend(name, target) {
 };
 
 
-flows.dispatch = function (modelName, options) {
+reflow.dispatch = function (modelName, options) {
     if (modelName && modelName.constructor === String)
         storeState(options, modelName, 'Vue.flow');
     else throw 'the first argument should be a model name the second shuould be a plain object';
 };
 
-flows.bind = function (bindName, func) {
+reflow.bind = function (bindName, func) {
     if (typeof func === 'function')
         switch (bindName) {
             case 'beforeStore':
@@ -104,18 +103,18 @@ flows.bind = function (bindName, func) {
     else throw 'a callback as the second argument is needed';
 };
 
-flows.addMiddleware = function (middleware) {
+reflow.addMiddleware = function (middleware) {
     if (typeof middleware === 'object' && middleware.constructor === Array)
         middlewares = middlewares.concat(middleware);
     else if (typeof middleware === 'function') middlewares.push(middleware);
 };
 
-flows.mixin = function (obj) {
+reflow.mixin = function (obj) {
     Object.assign(mixins, obj);
 };
 
 
-flows.install=function(Vue){
+reflow.install=function(Vue){
 
     Vue.mixin({
 
@@ -178,7 +177,7 @@ flows.install=function(Vue){
 
 
 
-flows.mixin({
+reflow.mixin({
 
     each: function (obj, cb) {
         if (typeof obj === 'object') {
@@ -318,7 +317,7 @@ function pathValue(statePath) {
 
 function clone(obj) {
     if (typeof obj === 'object')
-        return flows.config.cloneMode === 'deep' ?
+        return reflow.config.cloneMode === 'deep' ?
             JSON.parse(JSON.stringify(obj)) :
             ( obj.constructor === Array ? obj.slice() : Object.assign({}, obj) );
     else return obj;
@@ -349,11 +348,11 @@ function apply(func, args, context) {
 
 
 if (typeof module === 'object' && module.exports) {
-    module.exports = flows;
+    module.exports = reflow;
 }
 else if (typeof define === 'function' && define.amd) {
     define(function () {
-        return flows;
+        return reflow;
     })
 }
 

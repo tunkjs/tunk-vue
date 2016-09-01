@@ -1,10 +1,14 @@
+import 'babel-polyfill';
 import Vue from 'vue';
-import vueFlow from "vue-flow";
+import reflow from "./vue-reflow";
 import App from "./components/Counter.vue";
+import actionMiddleware from "./vue-flow-action-middleware";
 
-Vue.use(vueFlow);
+Vue.use(reflow);
 
-require('./models/main');
+reflow.addMiddleware([actionMiddleware]);
+
+require('./models/counter2');
 
 new Vue({
     el: 'body',

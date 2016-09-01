@@ -12,25 +12,21 @@
 'use strict';
 export default {
 	replace:true,
-    flow: {
+    state: {
       count: 'counter.count'
     },
-	created(){
-		console.log(this);
+    actions:{
+    	increment:'counter.increment',
+    	decrement:'counter.decrement',
+    	incrementIfOdd:'counter.incrementIfOdd',
+    },
+	ready(){
+		console.log(this,this.state,this.props);
 	},
     methods:{
-		increment(){
-			this.$action('counter.increment');
-		},
-		decrement(){
-			this.$action('counter.decrement');
-		},
-		incrementIfOdd(){
-			this.$action('counter.incrementIfOdd');
-		},
 		incrementAsync(){
 			this.$action('counter.incrementAsync');
-		},
+		}
 	}
 }
 </script>
