@@ -7,7 +7,7 @@ let path = require('path');
 let webpack = require('webpack');
 
 module.exports = {
-    devtool: 'cheap-module-eval-source-map',
+    //devtool: 'cheap-module-eval-source-map',
     entry: {
         main: './index.js',
     },
@@ -18,7 +18,11 @@ module.exports = {
         chunkFilename: '[id].bundle.js?[chunkhash]',
     },
     resolve: {
-        extensions: ['', '.js', '.vue']
+        extensions: ['', '.js', '.vue'],
+        alias: {
+            tunk: path.join(__dirname, 'tunk.js'),
+            'tunk-vue':path.join(__dirname, 'tunk-vue.js'),
+        }
     },
     module: {
         loaders: [

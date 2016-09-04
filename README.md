@@ -1,3 +1,3 @@
-# vue-flow
+# tunk-vue
 
-To make the state of application managed and processed as "Data Flow".
+Vue bindings for tunk.
