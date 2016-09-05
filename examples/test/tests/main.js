@@ -1,3 +1,5 @@
+
+require('./request.vue')
 export default {
 	options:require('./options.vue'),
 	//promise:require('./promise.vue'),

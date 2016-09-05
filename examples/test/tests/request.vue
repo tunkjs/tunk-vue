@@ -7,7 +7,7 @@
 
 <script>
 
-import {extend, action} from 'baflow';
+import {extend, action} from 'tunk';
 
 
 @extend
@@ -20,17 +20,17 @@ class request {
     @action
 	test_jsonp(){
 		var self = this;
-		var jsonp = this.jsonp('http://search.lefeng.com/ajax/getHotKeys',function(v){if(v.data) self.dispatch({t:'jsonp'});});
+		var jsonp = this.jsonp('/jsonp',function(v){if(v.data) self.dispatch({t:'jsonp'});});
 	}
 	@action
 	async test_jsonp_promise (){
-		var jsonp = await this.jsonp('http://search.lefeng.com/ajax/getHotKeys',function(v){});
+		var jsonp = await this.jsonp('jsonp',function(v){});
 		if(jsonp.data) return {t:'jsonp_promise'};
 	}
 	@action
 	test_jsonp_abort(){
 		var self = this;
-		var jsonp = this.jsonp('http://search.lefeng.com/ajax/getHotKeys',function(v){},function(e){
+		var jsonp = this.jsonp('jsonp',function(v){},function(e){
 			//console.log('test_jsonp_abort',arguments);
 			self.dispatch({t:'jsonp_abort'});
 		});
@@ -39,17 +39,17 @@ class request {
 	@action
 	test_json(){
 		var self = this;
-		var json = this.getJson('http://search.lefeng.com/ajax/getHotKeys',function(v){if(v.data) self.dispatch({t:'json'});});
+		var json = this.getJson('/api',function(v){if(v.data) self.dispatch({t:'json'});});
 	}
 	@action
 	async test_json_promise (){
-		var json = await this.getJson('http://search.lefeng.com/ajax/getHotKeys',function(v){});
+		var json = await this.getJson('/api',function(v){});
 		if(json.data) return {t:'json_promise'};
 	}
 	@action
 	test_json_abort(){
 		var self = this;
-		var json = this.getJson('http://search.lefeng.com/ajax/getHotKeys',function(v){},function(e){
+		var json = this.getJson('/api',function(v){},function(e){
 			//console.log('test_json_abort',arguments);
 			self.dispatch({t:'json_abort'});
 		});
@@ -59,7 +59,7 @@ class request {
 	test_$request_model(){
 		var self = this;
 		var json = this.request({
-			url:'http://search.lefeng.com/ajax/getHotKeys',
+			url:'/api',
 			extra:{
 				timeout:3,
 				success:'成功',

@@ -6,7 +6,7 @@
 
 <script>
 
-import {extend, action} from 'baflow';
+import {extend, action} from 'tunk';
 
 @extend
 class options {

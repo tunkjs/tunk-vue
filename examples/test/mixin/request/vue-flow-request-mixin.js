@@ -1,6 +1,6 @@
 ;(function(){
 
-    var baflow = require('baflow');
+    var tunk = require('tunk');
 
     var jsonpID = +new Date(),
         document = window.document,
@@ -37,8 +37,8 @@
             return {queue:queu};
         };
 
-        baflow.action($request.prototype,'remove');
-        baflow.extend($request);
+        tunk.action($request.prototype,'remove');
+        tunk.extend($request);
 
         return request;
     }
@@ -55,8 +55,7 @@
         if(queue.length==maxQueueLength) queue.pop();
         queue.unshift(settings.extra);
 
-        baflow.dispatch('$request', {queue:queue});
-        baflow.dispatch('$request', {pending:true});
+        tunk.dispatch('$request', {queue:queue, pending:true});
 
         if (!settings.crossDomain) {
             urlAnchor = document.createElement('a');
@@ -187,8 +186,8 @@
         settings.success(data, status, xhr);
         if (resolve) resolve(data);
         settings.extra.status ='success';
-        baflow.dispatch('$request', {queue:queue});
-        baflow.dispatch('$request', {pending:getPending()});
+        tunk.dispatch('$request', {queue:queue});
+        tunk.dispatch('$request', {pending:getPending()});
         ajaxComplete(status, xhr, settings);
     }
 
@@ -197,8 +196,8 @@
         settings.error( xhr, type, error);
         settings.extra.status ='error';
         settings.extra.errorType =type;
-        baflow.dispatch('$request', {queue:queue});
-        baflow.dispatch('$request', {pending:getPending()});
+        tunk.dispatch('$request', {queue:queue});
+        tunk.dispatch('$request', {pending:getPending()});
         //console.log('@@@ajaxError',error,type,settings,xhr);
         ajaxComplete(type, xhr, settings);
     }

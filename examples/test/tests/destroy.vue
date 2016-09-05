@@ -7,7 +7,7 @@
 
 //in request.vue
 export default {
-    flow: {
+    state: {
 		q:'$request.queue'
     },
 

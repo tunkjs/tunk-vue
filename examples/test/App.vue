@@ -5,8 +5,8 @@
 </template>
 
 <style scoped>
-	@import url('./libs/css/bootstrap.css');
-	@import url('./libs/css/font-awesome.css');
+
+
 
 </style>
 <script>

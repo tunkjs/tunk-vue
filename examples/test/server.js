@@ -14,6 +14,15 @@ app.get("/", function(req, res) {
   res.sendFile(__dirname + '/index.html')
 })
 
+app.get("/api", function(req, res) {
+  res.send({data:1});
+})
+
+app.get("/jsonp", function(req, res) {
+  console.log(req)
+  res.send((req.query.jsonp||req.query.callback)+'('+JSON.stringify({data:1})+')');
+})
+
 app.listen(port, function(error) {
   if (error) {
     console.error(error)

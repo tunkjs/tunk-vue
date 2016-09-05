@@ -31,9 +31,14 @@
 
 	}
 	div{
-		width:50%;
 		margin:5px;
 	}
+	.label-success{
+		color:green;
+	}
+	.label-danger{
+    		color:red;
+    	}
 </style>
 <script>
 
