@@ -1,30 +1,43 @@
-import Vue from 'vue';
+import {extend, action} from 'tunk';
 
-Vue.flow.model('counter',{
 
-    default:{
-        count: 0,
-    },
+@extend
+export default class counter {
+l
+  //不允许异步，应该保持简单
+  constructor(){
+    this.dispatch({
+      count:0
+    });
+  }
 
-    increment:function(opt){
-		return {count:this.getState().count+1};
-    },
+  @action
+  increment(){
+    console.log(this);
+    return {count:this.addOne()};
+  }
 
-    decrement:function(){
-		return {count:this.getState().count-1};
-    },
+  @action
+  decrement(){
+    return {count:this.state.count-1};
+  }
 
-	incrementIfOdd:function(){
-		if ((this.getState().count + 1) % 2 === 0) {
-			this.dispatch('increment')
-		}
-    },
+  @action
+  incrementIfOdd(){
+    if ((this.state.count + 1) % 2 === 0) {
+      this.increment();
+    }
+  }
 
-	incrementAsync:function(){
-		setTimeout(() => {
-			this.dispatch('increment')
-		}, 1000)
-    },
+  @action
+  incrementAsync(){
+    setTimeout(() => {
+      this.dispatch('increment')
+    }, 1000)
+  }
 
-});
+  addOne(){
+    return this.state.count+1;
+  }
+}
 

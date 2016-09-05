@@ -18,11 +18,7 @@ module.exports = {
         chunkFilename: '[id].bundle.js?[chunkhash]',
     },
     resolve: {
-        extensions: ['', '.js', '.vue'],
-        alias: {
-            tunk: path.join(__dirname, 'tunk.js'),
-            'tunk-vue':path.join(__dirname, 'tunk-vue.js'),
-        }
+        extensions: ['', '.js', '.vue']
     },
     module: {
         loaders: [
