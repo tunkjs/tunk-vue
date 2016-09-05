@@ -69,7 +69,7 @@ class request {
 			success:function(v){
 				setTimeout(()=>{
 					console.log(json);
-					self.dispatch('$request.remove',json.id);
+					self.dispatch('REQUEST.remove',json.id);
 					self.dispatch({t:'request_model_remove'});
 				},2000);
 			},
@@ -81,8 +81,8 @@ class request {
 export default {
 	state:{
 		t:'request.t',
-		p:'$request.pending',
-		q:'$request.queue'
+		p:'REQUEST.pending',
+		q:'REQUEST.queue'
 	},
 	actions:{
 		jsonp:'request.test_jsonp',

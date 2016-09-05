@@ -29,6 +29,10 @@
     "vue": "^1.0.21",
     "tunk":"",
     "tunk-vue":"",
-    "tunk-action-middleware":""
+    "tunk-request":"",
+    "tunk-cookie":"",
+    "tunk-promise-middleware":"",
+    "tunk-action-middleware":"",
+    "tunk-function-middleware":""
   }
 }
