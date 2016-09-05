@@ -8,7 +8,7 @@
 //in request.vue
 export default {
     state: {
-		q:'$request.queue'
+		q:'REQUEST.queue'
     },
 
 	ready(){
