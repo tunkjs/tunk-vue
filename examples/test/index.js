@@ -16,7 +16,7 @@ tunk.mixin(cookie);
 
 new Vue({
     el: 'body',
-    components: { 
+    components: {
 		App:require('./App.vue'),
 	}
 })
