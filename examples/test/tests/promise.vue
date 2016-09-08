@@ -60,7 +60,7 @@ export default {
 			}
 		};
 	},
-	beforeFlowIn(meta){
+	beforeStateInject(meta){
 	    if(meta.value==='define') this.$data.units.define=true;
 	    if(meta.value==='return') this.$data.units.return=true;
 	},

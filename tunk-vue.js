@@ -7,8 +7,8 @@
     tunk.install = function (Vue) {
 
         tunk.connectionApi.addStateUpdatedListener(function (targetObject, stateName, newValue, action) {
-            if (targetObject.$options.beforeFlowIn)
-                targetObject.$options.beforeFlowIn.call(targetObject, stateName, newValue, action);
+            if (targetObject.$options.beforeStateInject)
+                targetObject.$options.beforeStateInject.call(targetObject, stateName, newValue, action);
             targetObject.$set(stateName, newValue);
         });
 
@@ -28,10 +28,12 @@
                         }
                     }
 
-                    var initailState = tunk.connectionApi.connectState(this, stateOptions_);
+                    this.$options.stateOptions_=stateOptions_;
 
-                    for (var x in initailState) if (initailState.hasOwnProperty(x)) {
-                        Vue.util.defineReactive(this, x, initailState[x]);
+                    var initialState = tunk.connectionApi.connectState(this, stateOptions_);
+
+                    for (var x in initialState) if (initialState.hasOwnProperty(x)) {
+                        Vue.util.defineReactive(this, x, initialState[x]);
                     }
 
                 }
@@ -62,8 +64,8 @@
 
 
             beforeDestroy: function () {
-                if (this.$options.state) {
-                    tunk.connectionApi.disconnect(this, this.$options.state);
+                if (this.$options.stateOptions_) {
+                    tunk.connectionApi.disconnect(this, this.$options.stateOptions_);
                 }
             },
         });
