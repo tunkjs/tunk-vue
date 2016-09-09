@@ -6,10 +6,14 @@
 
     tunk.install = function (Vue) {
 
-        tunk.connectionApi.addStateUpdatedListener(function (targetObject, stateName, newValue, action) {
-            if (targetObject.$options.beforeStateInject)
-                targetObject.$options.beforeStateInject.call(targetObject, stateName, newValue, action);
-            targetObject.$set(stateName, newValue);
+
+        tunk.hook('updateComponentState', function(origin){
+            return function(targetObject, stateName, newValue, action){
+                if (targetObject.$options.beforeStateInject)
+                    targetObject.$options.beforeStateInject.call(targetObject, stateName, newValue, action);
+                targetObject.$set(stateName, newValue);
+                //origin.call(null, targetObject, stateName, newValue, action);
+            }
         });
 
 
