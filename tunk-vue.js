@@ -47,12 +47,13 @@
                     }
                 }
 
-
-                this.dispatch = function(actionPath){
-                    if (typeof actionPath !== 'string' || actionPath.indexOf('.') === -1) throw 'the first argument should has dot between module name and action name: ' + actionPath;
-                    actionPath = actionPath.split('.');
-                    tunk.connection.dispatch(actionPath[0], actionPath[1], Array.prototype.slice.call(arguments, 1));
-                }
+                tunk.connection.dispatch(this, 'dispatch', function(dispatch){
+                    return function(actionPath){
+                        if (typeof actionPath !== 'string' || actionPath.indexOf('.') === -1) throw 'the first argument should has dot between module name and action name: ' + actionPath;
+                        actionPath = actionPath.split('.');
+                        dispatch(actionPath[0], actionPath[1], Array.prototype.slice.call(arguments, 1));
+                    }
+                });
 
             },
 
