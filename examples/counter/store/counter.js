@@ -1,14 +1,13 @@
-import {extend, action} from 'tunk';
+import {create, action} from 'tunk';
 
 
-@extend
+@create({isolate:'deep'})
 export default class counter {
-l
   //不允许异步，应该保持简单
   constructor(){
-    this.dispatch({
+    this.state = {
       count:0
-    });
+    };
   }
 
   @action
@@ -32,7 +31,7 @@ l
   @action
   incrementAsync(){
     setTimeout(() => {
-      this.dispatch('increment')
+      this.dispatch('increment');
     }, 1000)
   }
 
