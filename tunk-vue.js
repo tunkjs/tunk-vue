@@ -4,10 +4,11 @@
         var tunk = this;
         tunk.install = function (Vue) {
             utils.hook('updateComponentState', function (origin) {
-                return function (targetObject, stateName, newValue, module, action) {
-                    if (targetObject.$options.beforeStateInject)
-                        targetObject.$options.beforeStateInject.call(targetObject, stateName, newValue, module + '.' + action);
+                return function (targetObject, stateName, newValue, options) {
+                    if (targetObject.$options.beforeStateChange)
+                        targetObject.$options.beforeStateChange.call(targetObject, stateName, newValue);
                     targetObject[stateName] = newValue;
+                    origin(targetObject, stateName, newValue, options);
                 }
             });
 
