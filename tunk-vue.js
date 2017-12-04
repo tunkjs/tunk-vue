@@ -52,7 +52,7 @@
                             // 只更新 changedFields 字段
                             if (statePath[1] && changedFields.indexOf(statePath[1]) === -1) continue;
                             //减少克隆次数，分发出去到达 View 的数据用同一个副本，减少调用 hooks.getValueFromStore
-                            ((targetObject, propName, newValue, options) => {
+                            (function(targetObject, propName, newValue, options) {
                                 if (targetObject.$options.beforeStateChange)
                                     targetObject.$options.beforeStateChange.call(targetObject, statePath, newValue);
                                 targetObject[propName] = newValue;
@@ -124,7 +124,7 @@
                     return function (actionPath) {
                         if (typeof actionPath !== 'string' || actionPath.indexOf('.') === -1) throw '[TUNK-VUE]:the first argument should has dot between module name and action name: ' + actionPath;
                         actionPath = actionPath.split('.');
-                        dispatch(actionPath[0], actionPath[1], Array.prototype.slice.call(arguments, 1));
+                        return dispatch(actionPath[0], actionPath[1], Array.prototype.slice.call(arguments, 1));
                     }
                 });
             }
