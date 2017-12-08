@@ -2,4 +2,4 @@
 .sass-cache
 .idea
 .project
-test/node_modules
+examples/**/node_modules

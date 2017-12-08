@@ -19,7 +19,7 @@
                 targetObject._tunkOptions_ = targetObject._tunkOptions_ || {};
                 targetObject._tunkOptions_[propName] = statePath;
                 //返回组件默认数据
-                return utils.hooks.getValueFromStore(statePath, utils.modules[statePath[0]].options);
+                return utils.hooks.getState(statePath, utils.modules[statePath[0]].options);
             },
             action: function (target, propName, moduleName, actionName) {
                 target[propName] = function () {
@@ -39,24 +39,24 @@
 
         tunk.install = function (Vue) {
             utils.hook('store', function (origin) {
-                return function (state, newState, options) {
+                return function (newState, options) {
                     var pipes = connections[options.moduleName],
                         changedFields = Object.keys(newState),
                         statePath;
 
-                    origin(state, newState, options);
+                    origin(newState, options);
 
                     setTimeout(function () {
                         if (pipes && pipes.length) for (var i = 0, l = pipes.length; i < l; i++) if (pipes[i]) {
                             statePath = pipes[i].statePath;
                             // 只更新 changedFields 字段
                             if (statePath[1] && changedFields.indexOf(statePath[1]) === -1) continue;
-                            //减少克隆次数，分发出去到达 View 的数据用同一个副本，减少调用 hooks.getValueFromStore
+                            //减少克隆次数，分发出去到达 View 的数据用同一个副本，减少调用 hooks.getState
                             (function(targetObject, propName, newValue, options) {
                                 if (targetObject.$options.beforeStateChange)
                                     targetObject.$options.beforeStateChange.call(targetObject, statePath, newValue);
                                 targetObject[propName] = newValue;
-                            })(pipes[i].comp, pipes[i].propName, utils.hooks.getValueFromStore(statePath, options), options);
+                            })(pipes[i].comp, pipes[i].propName, utils.hooks.getState(statePath, options), options);
                         }
                     });
                 }

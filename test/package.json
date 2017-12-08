@@ -1,0 +1,28 @@
+{
+  "name": "test-tunk",
+  "version": "0.0.1",
+  "author": "steven chen <522702986@qq.com>",
+  "license": "MIT",
+  "scripts":{
+    "start": "node server.js"
+  },
+  "devDependencies": {
+    "babel-core": "^6.5.2",
+    "babel-eslint": "^7.0.0",
+    "babel-loader": "^6.2.1",
+    "babel-plugin-add-module-exports": "^0.1.2",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-runtime": "^6.3.13",
+    "babel-plugin-typecheck": "^3.6.0",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-stage-0": "^6.3.13",
+    "friendly-errors-webpack-plugin": "^1.6.1",
+    "html-webpack-plugin": "^1.7.0",
+    "json-loader": "^0.5.4",
+    "tunk-loader": "^1.0.2",
+    "webpack": "^3.5.5",
+    "webpack-dev-middleware": "^1.12.0",
+    "webpack-dev-server": "^2.4.2",
+    "webpack-hot-middleware": "^2.18.2"
+  }
+}
