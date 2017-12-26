@@ -38,7 +38,7 @@
         };
 
         tunk.install = function (Vue) {
-            utils.hook('store', function (origin) {
+            utils.hook('setState', function (origin) {
                 return function (newState, options) {
                     var pipes = connections[options.moduleName],
                         changedFields = Object.keys(newState),
