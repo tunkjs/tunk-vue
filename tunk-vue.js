@@ -51,40 +51,28 @@
             function init() {
                 if (this.$options.state) {
                     var stateOptions = this.$options.state;
-                    if (stateOptions.constructor === Array) {
-                        for (var i = 0; i < stateOptions.length; i++) {
-                            Vue.util.defineReactive(this, stateOptions[i], connecState(this, stateOptions[i], stateOptions[i].split('.')));
-                        }
-                    } else
-                        for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
-                            Vue.util.defineReactive(this, x, connectState(this, x, stateOptions[x].split('.')));
-                        }
+
+                    for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
+                        Vue.util.defineReactive(this, x, connectState(this, x, stateOptions[x].split('.')));
+                    }
                 }
 
                 if (this.$options.actions) {
                     var actionOptions = this.$options.actions, tmp;
-                    if (actionOptions.constructor === Array) {
-                        for (var i = 0, x = actionOptions[0]; i < actionOptions.length; i++ , x = actionOptions[i]) {
-                            var proto = getModule(x).__proto__,
-                                protoNames = Object.getOwnPropertyNames(proto);
-                            for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options && proto[y].options.isAction) {
-                                connectAction(this, x + '_' + y, x, y);
-                            }
-                        }
-                    } else
-                        for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
-                            if (typeof actionOptions[x] === 'string')
-                                if (actionOptions[x].indexOf('.') > -1) {
-                                    tmp = actionOptions[x].split('.');
-                                    connectAction(this, x, tmp[0], tmp[1]);
-                                } else {
-                                    var proto = getModule(actionOptions[x]).__proto__,
-                                        protoNames = Object.getOwnPropertyNames(proto);
-                                    for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options && proto[y].options.isAction) {
-                                        connectAction(this, x + '_' + y, actionOptions[x], y);
-                                    }
+
+                    for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
+                        if (typeof actionOptions[x] === 'string')
+                            if (actionOptions[x].indexOf('.') > -1) {
+                                tmp = actionOptions[x].split('.');
+                                connectAction(this, x, tmp[0], tmp[1]);
+                            } else {
+                                var proto = getModule(actionOptions[x]).__proto__,
+                                    protoNames = Object.getOwnPropertyNames(proto);
+                                for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options && proto[y].options.isAction) {
+                                    connectAction(this, x + '_' + y, actionOptions[x], y);
                                 }
-                        }
+                            }
+                    }
                 }
 
                 this.dispatch = function (actionPath) {
