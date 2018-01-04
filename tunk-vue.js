@@ -51,27 +51,25 @@
             function init() {
                 if (this.$options.state) {
                     var stateOptions = this.$options.state;
-
                     for (var x in stateOptions) if (stateOptions.hasOwnProperty(x)) {
                         Vue.util.defineReactive(this, x, connectState(this, x, stateOptions[x].split('.')));
                     }
                 }
 
                 if (this.$options.actions) {
-                    var actionOptions = this.$options.actions, tmp;
 
-                    for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
-                        if (typeof actionOptions[x] === 'string')
-                            if (actionOptions[x].indexOf('.') > -1) {
+                    if (this.$options.actions.constructor === Object) {
+
+                        var actionOptions = this.$options.actions, tmp;
+
+                        for (var x in actionOptions) if (actionOptions.hasOwnProperty(x)) {
+                            if (actionOptions[x] && typeof actionOptions[x] === 'string'){
                                 tmp = actionOptions[x].split('.');
                                 connectAction(this, x, tmp[0], tmp[1]);
-                            } else {
-                                var proto = getModule(actionOptions[x]).__proto__,
-                                    protoNames = Object.getOwnPropertyNames(proto);
-                                for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options && proto[y].options.isAction) {
-                                    connectAction(this, x + '_' + y, actionOptions[x], y);
-                                }
                             }
+                        }
+                    }  else {
+                        throw '[tunk-vue]:the actions setting should be type of Object';
                     }
                 }
 
@@ -82,7 +80,7 @@
                 }
             }
 
-            function connecState(targetObject, propName, statePath) {
+            function connectState(targetObject, propName, statePath) {
                 if (!statePath[0] || !utils.modules[statePath[0]]) throw '[tunk]:unknown module name:' + statePath[0];
                 connections[statePath[0]] = connections[statePath[0]] || [];
                 connections[statePath[0]].push({
@@ -95,10 +93,25 @@
                 //返回组件默认数据
                 return utils.hooks.getState(statePath, utils.modules[statePath[0]].options);
             }
+
             function connectAction(target, propName, moduleName, actionName) {
-                target[propName] = function () {
-                    utils.dispatchAction(moduleName, actionName, arguments)
-                };
+                console.log(target, propName, moduleName, actionName);
+                if(!actionName){
+                    var proto = getModule(moduleName).__proto__,
+                        protoNames = Object.getOwnPropertyNames(proto);
+                    target[propName] = {};
+                    for (var i = 0, y = protoNames[0]; i < protoNames.length; i++ , y = protoNames[i]) if (proto[y].options) {
+                        (function(moduleName, actionName){
+                            target[propName][actionName] = function () {
+                                utils.dispatchAction(moduleName, actionName, arguments)
+                            };
+                        })(moduleName, y)
+                    }
+                }else {
+                    target[propName] = function () {
+                        utils.dispatchAction(moduleName, actionName, arguments)
+                    };
+                }
             }
 
             function getModule(moduleName) {

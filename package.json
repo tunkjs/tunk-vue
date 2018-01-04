@@ -1,6 +1,6 @@
 {
   "name": "tunk-vue",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Vue bindings for tunk.",
   "main": "tunk-vue.js",
   "author": "steven chen <522702986@qq.com>",

@@ -8,7 +8,7 @@ tunk除了可以跟vue配合，还可以跟react、rn、微信小程序等任何
 
 ####A. 如何触发模块的Action
 
- 两种方式：
+两种方式：
 
 1. 通过添加`actions`属性向视图组件注入Action代理方法
 2. 使用tunk-vue提供的 `this.dispatch('moduleName.actionName', [arg1, arg2, ...])`，支持返回action内执行return的内容，支持Promise 
