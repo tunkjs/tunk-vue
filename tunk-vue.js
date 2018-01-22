@@ -9,10 +9,8 @@
             utils.hook('setState', function (origin) {
                 return function (newState, options) {
                     var pipes = connections[options.moduleName],
-                        changedFields = Object.keys(newState),
+                        changedFields = Object.keys(origin(newState, options)),
                         statePath;
-
-                    origin(newState, options);
 
                     setTimeout(function () {
                         var stateChangeTargets = [], targetObject;
